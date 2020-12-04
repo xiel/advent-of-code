@@ -22,7 +22,7 @@ function isTreeAt(
 export function countTreeEncounters(
   treeMap: XAxisRepeatingTreeMap,
   slope: Slope
-) {
+): number {
   const mapYMax = treeMap.length - 1;
   const currentPos = {
     x: 0,
@@ -39,4 +39,13 @@ export function countTreeEncounters(
   }
 
   return treeEncounters;
+}
+
+export function calcProductOfTreeEncountersForSlopesOnMap(
+  slopes: Slope[],
+  treeMap: XAxisRepeatingTreeMap
+) {
+  return slopes
+    .map((slope) => countTreeEncounters(treeMap, slope))
+    .reduce((a, b) => a * b);
 }
