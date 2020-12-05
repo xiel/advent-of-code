@@ -4,7 +4,7 @@ describe("day 01 - part II", () => {
   it("should produce correct triplet", () => {
     const sums: { value: number; numbers: number[] }[] = [];
 
-    for (const num of input) {
+    loopOverInputs: for (const num of input) {
       sums.push({
         value: num,
         numbers: [num],
@@ -18,10 +18,17 @@ describe("day 01 - part II", () => {
           continue;
         }
 
+        const value = sum.value + num;
+        const numbers = sum.numbers.concat(num);
+
         sums.push({
-          value: sum.value + num,
-          numbers: sum.numbers.concat(num),
+          value,
+          numbers,
         });
+
+        if (value === 2020 && numbers.length === 3) {
+          break loopOverInputs;
+        }
       }
     }
 
@@ -29,18 +36,18 @@ describe("day 01 - part II", () => {
       (sum) => sum.value === 2020 && sum.numbers.length === 3
     );
     const [a, b, c] = triplet?.numbers ?? [];
-    const result = a * b * c;
+    const productResult = a * b * c;
 
     expect(triplet).toMatchInlineSnapshot(`
-    Object {
-      "numbers": Array [
-        438,
-        360,
-        1222,
-      ],
-      "value": 2020,
-    }
-  `);
-    expect(result).toMatchInlineSnapshot(`192684960`);
+      Object {
+        "numbers": Array [
+          438,
+          360,
+          1222,
+        ],
+        "value": 2020,
+      }
+    `);
+    expect(productResult).toMatchInlineSnapshot(`192684960`);
   });
 });
