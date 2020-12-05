@@ -1,8 +1,13 @@
-import { getMaxSeatId, parseBoardingPass } from "./BinaryBoarding";
+import {
+  findEmptySeatId,
+  getMaxSeatId,
+  parseBoardingPass,
+  parseBoardingPasses,
+} from "./BinaryBoarding";
 import { readFileSync } from "fs";
 
 describe("Binary Boarding", () => {
-  it("should work on example", function () {
+  it("should work on example", () => {
     expect(parseBoardingPass("FBFBBFFRLR")).toEqual({
       row: 44,
       column: 5,
@@ -10,7 +15,7 @@ describe("Binary Boarding", () => {
     });
   });
 
-  it("should calc boarding pass id", function () {
+  it("should calc boarding pass id", () => {
     expect(parseBoardingPass("BFFFBBFRRR")).toEqual({
       row: 70,
       column: 7,
@@ -28,10 +33,15 @@ describe("Binary Boarding", () => {
     });
   });
 
-  it("should get max seatId from input data", function () {
+  it("should get max seatId from input data", () => {
     expect(getMaxSeatId(readFileLines("./input.txt"))).toMatchInlineSnapshot(
       `996`
     );
+  });
+
+  it("should find missing seat", () => {
+    const boardingPasses = parseBoardingPasses(readFileLines("./input.txt"));
+    expect(findEmptySeatId(boardingPasses)).toMatchInlineSnapshot(`671`);
   });
 });
 

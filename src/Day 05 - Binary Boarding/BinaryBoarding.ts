@@ -1,5 +1,16 @@
+const ROWS = 128;
+const MAX_ROW_INDEX = ROWS - 1;
+const COLS = 8;
+const MAX_COL_INDEX = COLS - 1;
+
+interface BoardingPass {
+  row: number;
+  column: number;
+  seatID: number;
+}
+
 // seatEncodedString -> binary space partitioning
-export function parseBoardingPass(seatEncodedString: string) {
+export function parseBoardingPass(seatEncodedString: string): BoardingPass {
   const { row, column } = decodeSeat(seatEncodedString);
   const seatID = calcSeatId(row, column);
   return {
@@ -9,11 +20,17 @@ export function parseBoardingPass(seatEncodedString: string) {
   };
 }
 
+export function parseBoardingPasses(
+  seatEncodedStrings: string[]
+): BoardingPass[] {
+  return seatEncodedStrings.map((seatEncodedString) =>
+    parseBoardingPass(seatEncodedString)
+  );
+}
+
 export function getMaxSeatId(seatEncodedStrings: string[]) {
   return Math.max(
-    ...seatEncodedStrings.map(
-      (seatEncodedString) => parseBoardingPass(seatEncodedString).seatID
-    )
+    ...parseBoardingPasses(seatEncodedStrings).map((pass) => pass.seatID)
   );
 }
 
@@ -26,46 +43,35 @@ function createUpdateRangeWithMarkers(
   return function updateRange(currentRange: Range, marker: string): Range {
     const [currentLow, currentUpper] = currentRange;
     const nextLowerRangeEnd = Math.floor((currentLow + currentUpper) / 2);
-    const nextLowerRange: Range = [currentLow, nextLowerRangeEnd];
-    const nextUpperRange: Range = [nextLowerRangeEnd + 1, currentUpper];
 
     if (marker === lowerMarker) {
-      return nextLowerRange;
+      return [currentLow, nextLowerRangeEnd];
     } else if (marker === upperMarker) {
-      return nextUpperRange;
+      return [nextLowerRangeEnd + 1, currentUpper];
     } else {
       throw new Error("unknown marker");
     }
   };
 }
 
-const rows = 128;
-const maxRowIndex = rows - 1;
-const columns = 8;
-const maxColumnIndex = columns - 1;
-
 function decodeSeat(seatEncodedString: string) {
   const rowStringPart = seatEncodedString.substr(0, 7);
   const columnStringPart = seatEncodedString.substr(7, 3);
-
   const updateRowRange = createUpdateRangeWithMarkers("F", "B");
   const updateColumnRange = createUpdateRangeWithMarkers("L", "R");
 
-  const initialRowRange: Range = [0, maxRowIndex];
-  const initialColumnRange: Range = [0, maxColumnIndex];
-
-  const rowRange = rowStringPart
+  const rowRange: Range = rowStringPart
     .split("")
-    .reduce(
+    .reduce<Range>(
       (currentRange, character) => updateRowRange(currentRange, character),
-      initialRowRange
+      [0, MAX_ROW_INDEX]
     );
 
-  const columnRange = columnStringPart
+  const columnRange: Range = columnStringPart
     .split("")
-    .reduce(
+    .reduce<Range>(
       (currentRange, character) => updateColumnRange(currentRange, character),
-      initialColumnRange
+      [0, MAX_COL_INDEX]
     );
 
   if (rowRange[0] !== rowRange[1])
@@ -81,4 +87,24 @@ function decodeSeat(seatEncodedString: string) {
 
 function calcSeatId(row: number, column: number) {
   return row * 8 + column;
+}
+
+export function findEmptySeatId(boardingPasses: BoardingPass[]): number {
+  // create a set for fast look up
+  const filledSeats = new Set(boardingPasses.map((p) => p.seatID));
+  const maxSeatId = calcSeatId(ROWS, COLS);
+  let currentSeatId = 0;
+
+  while (currentSeatId <= maxSeatId) {
+    if (
+      !filledSeats.has(currentSeatId) &&
+      filledSeats.has(currentSeatId - 1) &&
+      filledSeats.has(currentSeatId + 1)
+    ) {
+      break;
+    }
+    currentSeatId++;
+  }
+
+  return currentSeatId;
 }
