@@ -77,7 +77,7 @@ function decodeSeat(seatEncodedString: string) {
   if (rowRange[0] !== rowRange[1])
     throw new Error("row range did not end up on one row");
   if (columnRange[0] !== columnRange[1])
-    throw new Error("column range did not end up on one row");
+    throw new Error("column range did not end up on one column");
 
   return {
     row: rowRange[0],
