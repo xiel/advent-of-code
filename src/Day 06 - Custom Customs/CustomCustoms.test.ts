@@ -1,5 +1,8 @@
 import { readFileSync } from "fs";
-import { countChoicesInGroups } from "./CustomCustoms";
+import {
+  countChoicesInGroups,
+  countUnanimousChoicesInGroups,
+} from "./CustomCustoms";
 
 describe("Custom Customs", () => {
   it("should count choices once (example)", () => {
@@ -12,6 +15,24 @@ describe("Custom Customs", () => {
     expect(
       countChoicesInGroups(readFileLinesIntoGroups("fixtures/input.txt"))
     ).toMatchInlineSnapshot(`6703`);
+  });
+});
+
+describe("Custom Customs - Unanimous Choices", () => {
+  it("should count unanimous choices (example)", () => {
+    expect(
+      countUnanimousChoicesInGroups(
+        readFileLinesIntoGroups("fixtures/example.txt")
+      )
+    ).toEqual(6);
+  });
+
+  it("should count unanimous choices (input)", () => {
+    expect(
+      countUnanimousChoicesInGroups(
+        readFileLinesIntoGroups("fixtures/input.txt")
+      )
+    ).toMatchInlineSnapshot(`3430`);
   });
 });
 

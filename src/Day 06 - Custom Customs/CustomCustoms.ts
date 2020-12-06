@@ -9,7 +9,7 @@ export function countChoicesInGroups(groups: GroupCustoms[]) {
 }
 
 // duplicate answers to the same question don't count extra; each question counts at most once
-export function countDifferentChoicesInGroup(group: GroupCustoms) {
+function countDifferentChoicesInGroup(group: GroupCustoms) {
   const groupChoices = new Set();
 
   for (const personChoices of group) {
@@ -17,4 +17,25 @@ export function countDifferentChoicesInGroup(group: GroupCustoms) {
   }
 
   return groupChoices.size;
+}
+
+export function countUnanimousChoicesInGroups(groups: GroupCustoms[]) {
+  return groups.reduce(
+    (sum, group) => sum + countUnanimousChoicesInGroup(group),
+    0
+  );
+}
+
+function countUnanimousChoicesInGroup(group: GroupCustoms) {
+  const [firstPerson, ...restPersons] = group;
+  let unanimousChoices = firstPerson.split("");
+
+  for (const person of restPersons) {
+    const personChoices = new Set(person.split(""));
+    unanimousChoices = unanimousChoices.filter((choice) =>
+      personChoices.has(choice)
+    );
+  }
+
+  return unanimousChoices.length;
 }
