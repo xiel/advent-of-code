@@ -12,22 +12,22 @@ export function programToString(program: ParsedIntCodeProgram) {
 
 export function runIntCode(
   program: string | number[],
-  cursor = 0
+  pointer = 0 // instruction pointer
 ): ParsedIntCodeProgram {
-  let nextIndex: number;
   const p = typeof program === "string" ? parseProgram(program) : program;
-  const currentOpcode = p[cursor];
+  const currentOpcode = p[pointer];
 
+  let nextIndex: number;
   switch (currentOpcode) {
     // add
     case 1:
-      p[p[cursor + 3]] = p[p[cursor + 1]] + p[p[cursor + 2]];
-      nextIndex = cursor + 4;
+      p[p[pointer + 3]] = p[p[pointer + 1]] + p[p[pointer + 2]];
+      nextIndex = pointer + 4;
       break;
     // multiply
     case 2:
-      p[p[cursor + 3]] = p[p[cursor + 1]] * p[p[cursor + 2]];
-      nextIndex = cursor + 4;
+      p[p[pointer + 3]] = p[p[pointer + 1]] * p[p[pointer + 2]];
+      nextIndex = pointer + 4;
       break;
     // halt program
     case 99:
@@ -38,6 +38,34 @@ export function runIntCode(
   }
 
   return runIntCode(p, nextIndex);
+}
+
+// In this program, the value placed in address 1 is called the noun, and the value placed in address 2 is called the verb. Each of the two input values will be between 0 and 99, inclusive.
+function tryInputsToFindSum(
+  program: ParsedIntCodeProgram,
+  desiredSum: number
+): [number, number] {
+  let noun = 0;
+  while (noun <= 99) {
+    let verb = 0;
+    while (verb <= 99) {
+      const currentProgram = [...program];
+
+      currentProgram[1] = noun;
+      currentProgram[2] = verb;
+
+      const programResult = runIntCode(currentProgram)[0];
+
+      if (programResult === desiredSum) {
+        return [noun, verb];
+      }
+
+      verb++;
+    }
+    noun++;
+  }
+
+  throw Error("search ended without result");
 }
 
 describe("Intcode program", () => {
@@ -61,5 +89,19 @@ describe("Intcode program", () => {
     inputProgram[2] = 2;
 
     expect(runIntCode(inputProgram)[0]).toMatchInlineSnapshot(`5866714`);
+  });
+
+  it("should find input parameter to create a certain result", () => {
+    const inputProgram = parseProgram(
+      readFileIntoLines(`${__dirname}/input.txt`)[0]
+    );
+    const [noun, verb] = tryInputsToFindSum(inputProgram, 19690720);
+    expect([noun, verb]).toMatchInlineSnapshot(`
+      Array [
+        52,
+        8,
+      ]
+    `);
+    expect(noun * 100 + verb).toMatchInlineSnapshot(`5208`);
   });
 });
