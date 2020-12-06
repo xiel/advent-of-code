@@ -23,6 +23,7 @@ function getManhattenDistanceClosestIntersection(
   wireAStr: WirePathStr,
   wireBStr: WirePathStr
 ): number {
+  const wireAPasses = new Set<string>();
   const wirePathA: XYPos[] = wireAStr.split(",").reduce(
     (acc, instruction) => {
       let latestPos = acc[acc.length - 1];
@@ -38,6 +39,9 @@ function getManhattenDistanceClosestIntersection(
         };
 
         acc.push(latestPos);
+
+        wireAPasses.add(latestPos.x + "|" + latestPos.y);
+
         movement.x += -diffX;
         movement.y += -diffY;
       }
@@ -63,14 +67,8 @@ function getManhattenDistanceClosestIntersection(
             y: latest.y + diffY,
           };
 
-          const possibleIntersection = wirePathA.find(
-            (pos) => pos.x === latest.x && pos.y === latest.y
-          );
-
-          if (possibleIntersection) {
-            const distance =
-              Math.abs(possibleIntersection.x) +
-              Math.abs(possibleIntersection.y);
+          if (wireAPasses.has(latest.x + "|" + latest.y)) {
+            const distance = Math.abs(latest.x) + Math.abs(latest.y);
 
             if (
               !latest.closestIntersection ||
@@ -117,7 +115,6 @@ describe("Crossed Wires", () => {
 
   test("Input Data - What is the Manhattan distance from the central port to the closest intersection?", () => {
     const [wireA, wireB] = readFileIntoLines(`${__dirname}/input.txt`);
-    console.log({ wireA, wireB });
     expect(
       getManhattenDistanceClosestIntersection(wireA, wireB)
     ).toMatchInlineSnapshot(`316`);
