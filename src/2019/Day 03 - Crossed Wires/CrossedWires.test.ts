@@ -2,6 +2,7 @@ import { readFileIntoLines } from "../../utils/readFile"
 
 type WirePathStr = string
 type XY = { x: number; y: number }
+type XYStepPath = { x: number; y: number; steps: number }
 
 function instructionToXYMovement(instruction: string): XY {
   const [direction, value] = [
@@ -39,8 +40,8 @@ function getManhattanDistanceClosestIntersection(
     : 0
 }
 
-function wireStrToXYPath(wireStr: WirePathStr): XY[] {
-  const xyPath: XY[] = [{ x: 0, y: 0 }]
+function wireStrToXYPath(wireStr: WirePathStr): XYStepPath[] {
+  const xyPath: XYStepPath[] = [{ x: 0, y: 0, steps: 0 }]
   const instructions = wireStr.split(",")
 
   for (const instruction of instructions) {
@@ -50,13 +51,12 @@ function wireStrToXYPath(wireStr: WirePathStr): XY[] {
     xyPath.push({
       x: latestPos.x + movement.x,
       y: latestPos.y + movement.y,
+      steps: latestPos.steps + Math.abs(movement.x) + Math.abs(movement.y),
     })
   }
 
   return xyPath
 }
-
-type IntersectionWithSteps = XY & { steps: number }
 
 function getLineIntersect(
   { x: x1, y: y1 }: XY,
@@ -66,7 +66,7 @@ function getLineIntersect(
 ): XY | null {
   const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
 
-  // Lines are parallel.
+  // Lines are parallel
   if (!denom) {
     return null
   }
@@ -74,31 +74,37 @@ function getLineIntersect(
   const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
   const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
 
+  // Get the intersection point
   if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
-    // Get the intersection point.
     return { x: x1 + ua * (x2 - x1), y: y1 + ua * (y2 - y1) }
   }
 
   return null
 }
 
-function getIntersectionsOnPath(
-  pathPart: [XY, XY],
-  wireIntersecting: XY[]
-): IntersectionWithSteps[] {
-  const [fromA, toA] = pathPart
-  return wireIntersecting.flatMap<IntersectionWithSteps>((val, i, arr) => {
-    if (!i) return []
+function countSteps(a: XY, b: XY) {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+}
 
+function getIntersectionsOnPath(
+  pathPart: [XYStepPath, XYStepPath],
+  wireIntersecting: XYStepPath[]
+): XYStepPath[] {
+  const [fromA, toA] = pathPart
+  return wireIntersecting.flatMap<XYStepPath>((val, i, arr) => {
+    if (!i) return []
     const [fromB, toB] = [arr[i - 1], val]
     const lineIntersect = getLineIntersect(fromA, toA, fromB, toB)
 
     if (lineIntersect) {
       if (lineIntersect.x === 0 && lineIntersect.y === 0) return []
+      const additionalStepsA = countSteps(fromA, lineIntersect)
+      const additionalStepsB = countSteps(fromB, lineIntersect)
       return [
         {
           ...lineIntersect,
-          steps: 0,
+          steps:
+            fromA.steps + fromB.steps + additionalStepsA + additionalStepsB,
         },
       ]
     }
@@ -116,8 +122,6 @@ function getFewestCombinedSteps(
     if (!i) return []
     return getIntersectionsOnPath([arr[i - 1], val], wireB)
   })
-
-  console.log(`intersections`, intersections)
 
   return intersections.length
     ? Math.min(...intersections.map((intersection) => intersection.steps))
@@ -170,9 +174,11 @@ describe("Crossed Wires", () => {
       ).toEqual(410)
     })
 
-    // test("Input Data", () => {
-    //   const [wireA, wireB] = readFileIntoLines(`${__dirname}/input.txt`);
-    //   expect(getFewestCombinedSteps(wireA, wireB)).toMatchInlineSnapshot();
-    // });
+    test("Input Data", () => {
+      const [wireA, wireB] = readFileIntoLines(`${__dirname}/input.txt`)
+      expect(getFewestCombinedSteps(wireA, wireB)).toMatchInlineSnapshot(
+        `16368`
+      )
+    })
   })
 })
