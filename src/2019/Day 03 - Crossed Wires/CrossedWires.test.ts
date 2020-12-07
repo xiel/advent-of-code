@@ -112,6 +112,30 @@ function wireStrToXYPath(wireStr: WirePathStr): XY[] {
 
 type IntersectionWithSteps = XY & { steps: number }
 
+function getLineIntersect(
+  { x: x1, y: y1 }: XY,
+  { x: x2, y: y2 }: XY,
+  { x: x3, y: y3 }: XY,
+  { x: x4, y: y4 }: XY
+): XY | null {
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+
+  // Lines are parallel.
+  if (!denom) {
+    return null
+  }
+
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
+
+  if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+    // Get the intersection point.
+    return { x: x1 + ua * (x2 - x1), y: y1 + ua * (y2 - y1) }
+  }
+
+  return null
+}
+
 function getIntersectionsOnPath(
   pathPart: [XY, XY],
   wireIntersecting: XY[]
@@ -121,23 +145,15 @@ function getIntersectionsOnPath(
     if (!i) return []
 
     const [fromB, toB] = [arr[i - 1], val]
-    const xCrosses =
-      (fromB.x <= toA.x && toB.y >= fromA.x) ||
-      (fromA.x <= toB.x && toA.x >= fromB.x)
+    const lineIntersect = getLineIntersect(fromA, toA, fromB, toB)
 
-    const yCrosses =
-      (fromB.y <= toA.y && toB.y >= fromA.y) ||
-      (fromA.y <= toB.y && toA.y >= fromB.y)
-
-    if (xCrosses && yCrosses) {
-      console.log("match!")
-      console.log(`[fromA, toA]`, [fromA, toA])
-      console.log(`[fromB, toB]`, [fromB, toB])
+    if (lineIntersect) {
+      if (lineIntersect.x === 0 && lineIntersect.y === 0) return []
+      console.log(`lineIntersect`, lineIntersect)
 
       return [
         {
-          x: 0,
-          y: 0,
+          ...lineIntersect,
           steps: 0,
         },
       ]
