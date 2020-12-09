@@ -4,36 +4,34 @@ describe("Day 9", () => {
   describe("Part I", () => {
     test("Example", () => {
       const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
-      expect(
-        firstNumNotSumOfPrev(
-          5,
-          example.map((ns) => Number(ns))
-        )
-      ).toEqual(127);
+      const numList = example.map((ns) => Number(ns));
+      expect(firstNumNotSumOfPrev(5, numList)).toEqual(127);
     });
 
     test("Input", () => {
       const example = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
-      expect(
-        firstNumNotSumOfPrev(
-          25,
-          example.map((ns) => Number(ns))
-        )
-      ).toMatchInlineSnapshot(`22406676`);
+      const numList = example.map((ns) => Number(ns));
+      expect(firstNumNotSumOfPrev(25, numList)).toMatchInlineSnapshot(
+        `22406676`
+      );
     });
   });
 
-  // describe("Part II", () => {
-  //   test("Example", () => {
-  //     const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
-  //     expect(fn2(example)).toEqual(8);
-  //   });
-  //
-  //   test("Input", () => {
-  //     const example = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
-  //     expect(fn2(example)).toMatchInlineSnapshot();
-  //   });
-  // });
+  describe("Part II", () => {
+    test("Example", () => {
+      const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
+      const numList = example.map((ns) => Number(ns));
+      expect(findEncryptionWeakness(127, numList)).toEqual(62);
+    });
+
+    test("Input", () => {
+      const example = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      const numList = example.map((ns) => Number(ns));
+      expect(findEncryptionWeakness(22406676, numList)).toMatchInlineSnapshot(
+        `2942387`
+      );
+    });
+  });
 });
 
 function firstNumNotSumOfPrev(preamble: number, list: number[]) {
@@ -54,4 +52,31 @@ function firstNumNotSumOfPrev(preamble: number, list: number[]) {
 
     currentIndex++;
   }
+}
+
+// find a contiguous set of at least two numbers in your list which sum to the invalid number from step 1.
+function findEncryptionWeakness(searchNum: number, list: number[]) {
+  let foundSum = NaN;
+
+  list.find((currentNum, currentI, arr) => {
+    const currentList: number[] = [currentNum];
+    let currentSum = currentNum;
+    let i = currentI + 1;
+
+    while (currentSum <= searchNum && i < arr.length) {
+      currentSum += arr[i];
+      currentList.push(arr[i]);
+
+      if (currentSum === searchNum) {
+        const min = Math.min(...currentList);
+        const max = Math.max(...currentList);
+        foundSum = min + max;
+        return true;
+      }
+
+      i++;
+    }
+  });
+
+  return foundSum;
 }
