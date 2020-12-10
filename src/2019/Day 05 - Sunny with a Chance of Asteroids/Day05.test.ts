@@ -17,6 +17,7 @@ enum MODE {
 
 export function runIntCode(
   program: string | number[],
+  input = 1,
   output?: (out: string | number, nextOptcode: number) => void,
   pointer = 0 // instruction pointer
 ): ParsedIntCodeProgram {
@@ -30,7 +31,6 @@ export function runIntCode(
     .slice(2)
     .map((n) => (Number(n) ? MODE.IMMEDIATE : MODE.POSITION))
 
-  const input = 1
   const p1 = p1Mode === MODE.IMMEDIATE ? p[pointer + 1] : p[p[pointer + 1]]
   const p2 = p2Mode === MODE.IMMEDIATE ? p[pointer + 2] : p[p[pointer + 2]]
   const p3 = p3Mode === MODE.IMMEDIATE ? p[pointer + 3] : p[p[pointer + 3]]
@@ -59,6 +59,32 @@ export function runIntCode(
         output(p1, p[nextIndex])
       }
       break
+    // Opcode 5 is jump-if-true: if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
+    case 5:
+      if (p1 !== 0) {
+        nextIndex = p2
+      } else {
+        nextIndex = pointer + 3
+      }
+      break
+    // Opcode 6 is jump-if-false: if the first parameter is zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
+    case 6:
+      if (p1 === 0) {
+        nextIndex = p2
+      } else {
+        nextIndex = pointer + 3
+      }
+      break
+    // Opcode 7 is less than: if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+    case 7:
+      p[p[pointer + 3]] = p1 < p2 ? 1 : 0
+      nextIndex = pointer + 4
+      break
+    // Opcode 8 is equals: if the first parameter is equal to the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+    case 8:
+      p[p[pointer + 3]] = p1 === p2 ? 1 : 0
+      nextIndex = pointer + 4
+      break
     // halt program
     case 99:
       return p
@@ -67,7 +93,7 @@ export function runIntCode(
       throw Error("unknown opcode " + currentOpcode)
   }
 
-  return runIntCode(p, output, nextIndex)
+  return runIntCode(p, input, output, nextIndex)
 }
 
 describe("Day 05 - Sunny with a Chance of Asteroids", () => {
@@ -86,7 +112,17 @@ describe("Day 05 - Sunny with a Chance of Asteroids", () => {
       readFileIntoLines(`${__dirname}/fixtures/input.txt`)[0]
     )
     const outputFn = jest.fn()
-    expect(runIntCode(inputProgram, outputFn))
+    expect(runIntCode(inputProgram, 1, outputFn))
     expect(outputFn).toHaveBeenLastCalledWith(15259545, 99)
+  })
+
+  it("should run input intcode program with input: 5", () => {
+    // Once you have a working computer, the first step is to restore the gravity assist program (your puzzle input) to the "1202 program alarm" state it had just before the last computer caught fire.
+    const inputProgram = parseProgram(
+      readFileIntoLines(`${__dirname}/fixtures/input.txt`)[0]
+    )
+    const outputFn = jest.fn()
+    expect(runIntCode(inputProgram, 5, outputFn))
+    expect(outputFn).toHaveBeenLastCalledWith(7616021, 99)
   })
 })
