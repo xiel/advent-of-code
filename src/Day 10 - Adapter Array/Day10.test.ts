@@ -1,6 +1,6 @@
 import { readFileIntoLines } from "../utils/readFile";
 
-describe("Day 10", () => {
+describe("Day 10 - Adapter Array", () => {
   describe("Part I", () => {
     test("Example", () => {
       const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
@@ -56,7 +56,6 @@ describe("Day 10", () => {
 // so the only adapters that could connect to it directly would need to have a joltage rating of 1, 2, or 3 jolts
 // adapters can only connect to a source 1-3 jolts lower than its rating
 // your device's built-in adapter is always 3 higher than the highest adapter, so its rating is 22 jolts (always a difference of 3).
-
 const possibleJoltageDiffs = [1, 2, 3];
 
 function makeChainCountJoltageDiffs(joltages: number[]) {
