@@ -29,19 +29,27 @@ describe("Day 10", () => {
     });
   });
 
-  // describe("Part II", () => {
-  //   test("Example", () => {
-  //     const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
-  //     const numList = example.map((ns) => Number(ns));
-  //     expect(fn2(127, numList)).toEqual(62);
-  //   });
-  //
-  //   test("Input", () => {
-  //     const example = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
-  //     const numList = example.map((ns) => Number(ns));
-  //     expect(fn2(22406676, numList)).toMatchInlineSnapshot();
-  //   });
-  // });
+  describe("Part II", () => {
+    test("Example", () => {
+      const example = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
+      const numList = example.map((ns) => Number(ns));
+      expect(countDistinctWaysOfConnecting(numList)).toEqual(8);
+    });
+
+    test("Example 2", () => {
+      const example = readFileIntoLines(`${__dirname}/fixtures/example2.txt`);
+      const numList = example.map((ns) => Number(ns));
+      expect(countDistinctWaysOfConnecting(numList)).toEqual(19208);
+    });
+
+    test("Input", () => {
+      const example = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      const numList = example.map((ns) => Number(ns));
+      expect(countDistinctWaysOfConnecting(numList)).toMatchInlineSnapshot(
+        `1157018619904`
+      );
+    });
+  });
 });
 
 // charging outlet has an effective rating of 0 jolts
@@ -73,7 +81,7 @@ function makeChainCountJoltageDiffs(joltages: number[]) {
     }
   }
 
-  // to device
+  // last adapter to device
   diffs[3] += 1;
 
   return diffs;
@@ -81,4 +89,36 @@ function makeChainCountJoltageDiffs(joltages: number[]) {
 
 function mutliplyDiffs(diffs: Record<number, number>) {
   return diffs[1] * diffs[3];
+}
+
+// What is the total number of distinct ways you can arrange the adapters to connect the charging outlet to your device?
+function countDistinctWaysOfConnecting(joltages: number[]) {
+  const fullSet = new Set(joltages);
+  const deviceJoltage = Math.max(...joltages) + 3;
+  const countMemory = new Map<number, number>();
+
+  function canReachEndWithConnections(startJoltage: number) {
+    let connectionsFromHere = 0;
+
+    for (const possibleDiff of possibleJoltageDiffs) {
+      const testJoltage = startJoltage + possibleDiff;
+
+      // this is the adapter before connecting to the device
+      if (testJoltage === deviceJoltage - 3) {
+        connectionsFromHere++;
+      } else if (fullSet.has(testJoltage)) {
+        if (countMemory.has(testJoltage)) {
+          connectionsFromHere += countMemory.get(testJoltage)!;
+        } else {
+          const count = canReachEndWithConnections(testJoltage);
+          countMemory.set(testJoltage, count);
+          connectionsFromHere += count;
+        }
+      }
+    }
+
+    return connectionsFromHere;
+  }
+
+  return canReachEndWithConnections(0);
 }
