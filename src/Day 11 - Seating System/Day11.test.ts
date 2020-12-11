@@ -107,7 +107,7 @@ const around = Object.freeze([
  * - empty seats that see no occupied seats become occupied,
  * - seats matching no rule don't change, and floor never changes.
  */
-function gameOfSeatingArea(initialSeatMap: SeatMap, newRules = false) {
+export function gameOfSeatingArea(initialSeatMap: SeatMap, newRules = false) {
   const width = initialSeatMap[0].length;
   const height = initialSeatMap.length;
   const occSeatsAroundBeforeGivingUpTheSeat = newRules ? 5 : 4;
@@ -147,6 +147,7 @@ function gameOfSeatingArea(initialSeatMap: SeatMap, newRules = false) {
         (map, changeFn) => changeFn(map),
         currentSeatMap
       );
+
       return tick();
     }
 
