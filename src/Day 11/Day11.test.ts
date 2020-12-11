@@ -1,23 +1,22 @@
 import { readFileIntoLines } from "../utils/readFile";
 
-const exampleEnd = [
-  "#.#L.L#.##",
-  "#LLL#LL.L#",
-  "L.#.L..#..",
-  "#L##.##.L#",
-  "#.#L.LL.LL",
-  "#.#L#L#.##",
-  "..L.L.....",
-  "#L#L##L#L#",
-  "#.LLLLLL.L",
-  "#.#L#L#.##",
-];
-
 describe("Day 11", () => {
   describe("Part I", () => {
     test("Example", () => {
       const list = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
       const splitSeats = list.map((row) => row.split(""));
+      const exampleEnd = [
+        "#.#L.L#.##",
+        "#LLL#LL.L#",
+        "L.#.L..#..",
+        "#L##.##.L#",
+        "#.#L.LL.LL",
+        "#.#L#L#.##",
+        "..L.L.....",
+        "#L#L##L#L#",
+        "#.LLLLLL.L",
+        "#.#L#L#.##",
+      ];
 
       // How many seats end up occupied?
       const seatMapAtEnd = gameOfSeatingArea(splitSeats);
@@ -33,6 +32,41 @@ describe("Day 11", () => {
       const seatMapAtEnd = gameOfSeatingArea(splitSeats);
       expect(countOccupiedSeatInSeatMap(seatMapAtEnd)).toMatchInlineSnapshot(
         `2222`
+      );
+    });
+  });
+
+  describe("Part II", () => {
+    test("Example", () => {
+      const list = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
+      const splitSeats = list.map((row) => row.split(""));
+      const exampleEnd2 = [
+        "#.L#.L#.L#",
+        "#LLLLLL.LL",
+        "L.L.L..#..",
+        "##L#.#L.L#",
+        "L.L#.LL.L#",
+        "#.LLLL#.LL",
+        "..#.L.....",
+        "LLL###LLL#",
+        "#.LLLLL#.L",
+        "#.L#LL#.L#",
+      ];
+
+      // How many seats end up occupied?
+      const seatMapAtEnd = gameOfSeatingArea2(splitSeats);
+      expect(seatMapAtEnd.map((row) => row.join(""))).toEqual(exampleEnd2);
+      expect(countOccupiedSeatInSeatMap(seatMapAtEnd)).toEqual(26);
+    });
+
+    test("Input", () => {
+      const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      const splitSeats = input.map((row) => row.split(""));
+
+      // How many seats end up occupied?
+      const seatMapAtEnd = gameOfSeatingArea2(splitSeats);
+      expect(countOccupiedSeatInSeatMap(seatMapAtEnd)).toMatchInlineSnapshot(
+        `2032`
       );
     });
   });
@@ -126,8 +160,6 @@ function gameOfSeatingArea(intialSeatMap: SeatMap) {
         currentSeatMap
       );
       return tick();
-    } else {
-      console.log("finished");
     }
 
     return currentSeatMap;
@@ -145,4 +177,95 @@ function countOccupiedSeatInSeatMap(map: SeatMap) {
       ),
     0
   );
+}
+
+/**
+ * - five or more visible occupied seats for an occupied seat to become empty (rather than four or more from the previous rules).
+ * - empty seats that see no occupied seats become occupied,
+ * - seats matching no rule don't change, and floor never changes.
+ */
+function gameOfSeatingArea2(intialSeatMap: SeatMap) {
+  let currentSeatMap: SeatMap = Object.freeze(intialSeatMap) as SeatMap;
+  const width = intialSeatMap[0].length;
+  const height = intialSeatMap.length;
+
+  function getSeatAt(x: number, y: number): string | undefined {
+    return currentSeatMap[y]?.[x];
+  }
+
+  function countOccupiedSeatsAroundThatWeCanSeeFrom(x: number, y: number) {
+    // see means we keep looking towards the aroundDir until we find a SEAT (occupied or not will stop the search)
+    // undefined means we reached the end of the seat map
+    return around.reduce((acc, aroundDir) => {
+      let firstSeatWeSee: string | undefined;
+      let [lookX, lookY] = [x, y];
+
+      while (!firstSeatWeSee) {
+        [lookX, lookY] = [lookX + aroundDir.x, lookY + aroundDir.y];
+
+        const seatLookPos = getSeatAt(lookX, lookY);
+
+        if (seatLookPos === FLOOR) continue;
+
+        if (seatLookPos === OCCUPIED) {
+          return acc + 1;
+        } else if (seatLookPos === EMPTY) {
+          return acc;
+        } else {
+          return acc;
+        }
+      }
+
+      return acc;
+    }, 0);
+  }
+
+  function tick(): SeatMap {
+    const changes: SeatMapChange[] = [];
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const seat = getSeatAt(x, y);
+
+        if (seat === undefined) throw new Error("no seat");
+
+        if (seat === EMPTY) {
+          const occSeatsAround = countOccupiedSeatsAroundThatWeCanSeeFrom(x, y);
+
+          if (occSeatsAround === 0) {
+            changes.push((map) => {
+              const newMap = [...map];
+              newMap[y] = [...newMap[y]];
+              newMap[y][x] = OCCUPIED;
+              return newMap as SeatMap;
+            });
+          }
+        } else if (seat === OCCUPIED) {
+          const occSeatsAround = countOccupiedSeatsAroundThatWeCanSeeFrom(x, y);
+
+          if (occSeatsAround >= 5) {
+            changes.push((map) => {
+              const newMap = [...map];
+              newMap[y] = [...newMap[y]];
+              newMap[y][x] = EMPTY;
+              return newMap as SeatMap;
+            });
+          }
+        }
+      }
+    }
+
+    // apply changes
+    if (changes.length) {
+      currentSeatMap = changes.reduce(
+        (map, changeFn) => changeFn(map),
+        currentSeatMap
+      );
+      return tick();
+    }
+
+    return currentSeatMap;
+  }
+
+  return tick();
 }
