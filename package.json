@@ -1,10 +1,13 @@
 {
   "name": "@xiel/aoc-2020",
+  "private": true,
+  "workspaces": [
+    "src/*"
+  ],
   "version": "1.0.0",
   "main": "index.js",
   "author": "Felix Leupold",
   "license": "MIT",
-  "private": true,
   "scripts": {
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
