@@ -1,30 +1,6 @@
-import { readFileIntoLines } from "../utils/readFile";
-
-describe("Day 11 - Rain Risk", () => {
-  // Figure out where the navigation instructions lead. What is the Manhattan distance between that location and the ship's starting position?
-  describe("Part I - What is the Manhattan distance between that location and the ship's starting position?", () => {
-    test("Example", () => {
-      const path = ["F10", "N3", "F7", "R90", "F11"];
-      expect(followInstructions(path)).toEqual({ x: 17, y: 8 });
-      expect(manhatten(followInstructions(path))).toEqual(25);
-    });
-
-    test("Input", () => {
-      const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
-      expect(manhatten(followInstructions(input))).toMatchInlineSnapshot(
-        `1032`
-      );
-    });
-  });
-});
-
-function manhatten({ x, y }: { x: number; y: number }) {
-  return Math.abs(x) + Math.abs(y);
-}
-
 const DIRS = Object.freeze(["N", "E", "S", "W"]);
 
-function followInstructions(instructions: string[]) {
+export function followInstructions(instructions: string[]) {
   let currentDirection = "E";
   const currentPosition = {
     x: 0, // E++
