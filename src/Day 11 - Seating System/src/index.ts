@@ -1,6 +1,6 @@
 // @ts-expect-error - currently no txt types
-import seatsFile from "../fixtures/input.txt";
-import { gameOfSeatingSystem, SeatMap } from "../GameOfSeatingSystem";
+import seatsFile from "../test/fixtures/input.txt";
+import { gameOfSeatingSystem, SeatMap } from "./GameOfSeatingSystem";
 
 (async () => {
   const list = await fetch(seatsFile).then((res) => res.text());

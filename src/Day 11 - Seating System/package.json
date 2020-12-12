@@ -1,11 +1,10 @@
 {
   "name": "day-11",
   "version": "1.0.0",
-  "main": "dist/index.js",
   "author": "Felix Leupold",
   "scripts": {
-    "start": "parcel demo/index.html",
-    "build": "parcel build demo/index.html"
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
   },
   "license": "MIT",
   "devDependencies": {

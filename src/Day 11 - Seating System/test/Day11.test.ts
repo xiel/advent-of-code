@@ -1,8 +1,8 @@
-import { readFileIntoLines } from "../utils/readFile";
+import { readFileIntoLines } from "../../utils/readFile";
 import {
   countOccupiedSeatInSeatMap,
   gameOfSeatingSystem,
-} from "./GameOfSeatingSystem";
+} from "../src/GameOfSeatingSystem";
 
 describe("Day 11 - Seating System", () => {
   describe("Part I", () => {
