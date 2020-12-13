@@ -19,6 +19,30 @@ describe("Day 13 - Shuttle Search", () => {
       expect(busId * waitTime).toMatchInlineSnapshot(`138`);
     });
   });
+
+  describe("Part II - What is the earliest timestamp such that all of the listed bus IDs depart at offsets matching their positions in the list?", () => {
+    test("Example", () => {
+      expect(findEarliestTsForOffsetDepartures("7,13,x,x,59,x,31,19")).toEqual(
+        1068781
+      );
+      expect(findEarliestTsForOffsetDepartures("17,x,13,19")).toEqual(3417);
+      expect(findEarliestTsForOffsetDepartures("67,7,59,61")).toEqual(754018);
+      expect(findEarliestTsForOffsetDepartures("67,x,7,59,61")).toEqual(779210);
+      expect(findEarliestTsForOffsetDepartures("67,7,x,59,61")).toEqual(
+        1261476
+      );
+      expect(findEarliestTsForOffsetDepartures("1789,37,47,1889")).toEqual(
+        1202161486
+      );
+    });
+
+    test("Input", () => {
+      const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      expect(findEarliestTsForOffsetDepartures(input[1])).toMatchInlineSnapshot(
+        `226845233210288`
+      );
+    });
+  });
 });
 
 // time(stamps) are in minutes
@@ -28,9 +52,6 @@ function findNextBus(earliestTimestampStr: string, possibleBusIdsStr: string) {
     .split(",")
     .map((idStr) => Number(idStr))
     .filter((id) => !isNaN(id));
-
-  console.log(`earliestTimestamp`, earliestTimestamp);
-  console.log(`busIds`, busIds);
 
   const waitTimes = busIds
     .map((busId) => {
@@ -42,12 +63,33 @@ function findNextBus(earliestTimestampStr: string, possibleBusIdsStr: string) {
     })
     .sort((a, b) => a.waitTime - b.waitTime);
 
-  console.log(`waitTimes`, waitTimes);
-
   const { busId, waitTime } = waitTimes[0];
 
   return {
     busId,
     waitTime,
   };
+}
+
+function findEarliestTsForOffsetDepartures(possibleBusIdsStr: string) {
+  const busIds = possibleBusIdsStr.split(",").map((idStr, offset) => {
+    const busId = Number(idStr);
+    if (isNaN(busId)) return 1;
+    return busId;
+  });
+
+  let incrementer = busIds[0]!;
+  let currentIndex = 1;
+  let currentTime = incrementer;
+
+  while (currentIndex < busIds.length) {
+    if ((currentTime + currentIndex) % busIds[currentIndex] == 0) {
+      incrementer *= busIds[currentIndex];
+      currentIndex += 1;
+    } else {
+      currentTime += incrementer;
+    }
+  }
+
+  return currentTime;
 }
