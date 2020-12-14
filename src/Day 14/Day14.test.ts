@@ -127,52 +127,32 @@ function decimalAddressToFloatingBitsAddresses(
     }
   });
 
-  return resolveFloatingBits(addressWithFloatingBitsArr);
+  const resolvedBits = resolveFloatingBits(addressWithFloatingBitsArr);
+  return resolvedBits.map((bits) => parseInt(bits, 2));
 }
 
 function resolveFloatingBits(numFloatingBits: string[]) {
-  const floatingBitsReversed = [...numFloatingBits].reverse();
-  let results = [0];
+  let results = new Set<string[]>();
 
-  floatingBitsReversed.forEach((bit, index) => {
-    if (bit === "1") {
-      results.forEach((currentValue, i) => {
-        results[i] = currentValue + Math.pow(2, index);
+  results.add(numFloatingBits);
+
+  numFloatingBits.forEach((bit, index) => {
+    if (bit === "X") {
+      const nextResults = new Set<string[]>();
+
+      results.forEach((bits) => {
+        const zero = [...bits];
+        const one = [...bits];
+        zero[index] = "0";
+        one[index] = "1";
+
+        nextResults.add(zero);
+        nextResults.add(one);
       });
-    } else if (bit === "X") {
-      results = results.flatMap((currentValue) => [
-        currentValue + Math.pow(2, index),
-        currentValue,
-      ]);
+
+      results = nextResults;
     }
   });
 
-  return results;
+  return Array.from(results.values()).map((bits) => bits.join(""));
 }
-
-// org:
-// function resolveFloatingBits(numFloatingBits: string[]) {
-//   let results = new Set<string[]>();
-//
-//   results.add(numFloatingBits);
-//
-//   numFloatingBits.forEach((bit, index) => {
-//     if (bit === "X") {
-//       const nextResults = new Set<string[]>();
-//
-//       results.forEach((bits) => {
-//         const zero = [...bits];
-//         const one = [...bits];
-//         zero[index] = "0";
-//         one[index] = "1";
-//
-//         nextResults.add(zero);
-//         nextResults.add(one);
-//       });
-//
-//       results = nextResults;
-//     }
-//   });
-//
-//   return Array.from(results.values()).map((bits) => bits.join(""));
-// }
