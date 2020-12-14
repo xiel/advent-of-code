@@ -127,8 +127,7 @@ function decimalAddressToFloatingBitsAddresses(
     }
   });
 
-  const resolvedBits = resolveFloatingBits(addressWithFloatingBitsArr);
-  return resolvedBits.map((bits) => parseInt(bits, 2));
+  return resolveFloatingBits(addressWithFloatingBitsArr);
 }
 
 function resolveFloatingBits(numFloatingBits: string[]) {
@@ -154,5 +153,5 @@ function resolveFloatingBits(numFloatingBits: string[]) {
     }
   });
 
-  return Array.from(results.values()).map((bits) => bits.join(""));
+  return Array.from(results.values()).map((bits) => parseInt(bits.join(""), 2));
 }
