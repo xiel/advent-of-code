@@ -3,7 +3,6 @@ import { readFileIntoLines } from "../utils/readFile";
 describe("Day 14 - Docking Data", () => {
   describe("Part I - What is the sum of all values left in memory after it completes?", () => {
     test("Example", () => {
-      const input = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
       expect(
         applyMask(
           "000000000000000000000000000000001011",
@@ -22,6 +21,22 @@ describe("Day 14 - Docking Data", () => {
     test("Input", () => {
       const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
       expect(runDockingProgram(input)).toEqual(9967721333886);
+    });
+  });
+
+  describe("Part II - Floating Bits - Emulator for a version 2 decoder chip.", () => {
+    test("Example", () => {
+      expect(
+        decimalAddressToFloatingBitsAddresses(
+          42,
+          "000000000000000000000000000000X1001X"
+        )
+      ).toEqual([26, 27, 58, 59]);
+    });
+
+    test("Input", () => {
+      const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      expect(runDockingProgramV2(input)).toEqual(4355897790573);
     });
   });
 });
@@ -60,4 +75,84 @@ function runDockingProgram(instructionsStrs: string[]) {
   }
 
   return Array.from(memory.values()).reduce((a, b) => a + b, 0);
+}
+
+// part 2
+function runDockingProgramV2(instructionsStrs: string[]) {
+  const memory = new Map<number, number>();
+  let currentMask = "";
+
+  for (const instr of instructionsStrs) {
+    const [assignee, valueStr] = instr.split(" = ");
+
+    if (assignee === "mask") {
+      currentMask = valueStr;
+      continue;
+    }
+
+    if (assignee.startsWith("mem[")) {
+      const valueNum = parseInt(valueStr, 10);
+      const addresses = decimalAddressToFloatingBitsAddresses(
+        parseInt(assignee.match(/\d+/)![0], 10),
+        currentMask
+      );
+
+      addresses.forEach((address) => memory.set(address, valueNum));
+    }
+  }
+
+  return Array.from(memory.values()).reduce((a, b) => a + b, 0);
+}
+
+function decimalAddressToFloatingBitsAddresses(
+  decimalAddress: number,
+  mask: string
+) {
+  const addressWithFloatingBitsArr = decimalAddress
+    .toString(2)
+    .padStart(mask.length, "0")
+    .split("");
+
+  mask.split("").forEach((bitStr, i) => {
+    // If the bitmask bit is 0, the corresponding memory address bit is unchanged.
+    if (bitStr === "0") return;
+    // If the bitmask bit is 1, the corresponding memory address bit is overwritten with 1.
+    if (bitStr === "1") {
+      addressWithFloatingBitsArr[i] = "1";
+      return;
+    }
+    // If the bitmask bit is X, the corresponding memory address bit is floating.
+    if (bitStr === "X") {
+      addressWithFloatingBitsArr[i] = "X";
+    }
+  });
+
+  const resolvedBits = resolveFloatingBits(addressWithFloatingBitsArr);
+  return resolvedBits.map((bits) => parseInt(bits, 2));
+}
+
+function resolveFloatingBits(numFloatingBits: string[]) {
+  let results = new Set<string[]>();
+
+  results.add(numFloatingBits);
+
+  numFloatingBits.forEach((bit, index) => {
+    if (bit === "X") {
+      const nextResults = new Set<string[]>();
+
+      results.forEach((bits) => {
+        const zero = [...bits];
+        const one = [...bits];
+        zero[index] = "0";
+        one[index] = "1";
+
+        nextResults.add(zero);
+        nextResults.add(one);
+      });
+
+      results = nextResults;
+    }
+  });
+
+  return Array.from(results.values()).map((bits) => bits.join(""));
 }
