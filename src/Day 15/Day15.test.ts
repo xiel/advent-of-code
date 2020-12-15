@@ -13,8 +13,10 @@ describe("Day 15", () => {
     });
   });
 
-  describe.skip("Part II", () => {
-    //...
+  describe("Part II", () => {
+    test("Input", () => {
+      expect(playMemory("0,20,7,16,1,18,15", 30000000)).toEqual(0);
+    });
   });
 });
 
