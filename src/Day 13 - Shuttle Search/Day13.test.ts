@@ -72,7 +72,7 @@ function findNextBus(earliestTimestampStr: string, possibleBusIdsStr: string) {
 }
 
 function findEarliestTsForOffsetDepartures(possibleBusIdsStr: string) {
-  const busIds = possibleBusIdsStr.split(",").map((idStr, offset) => {
+  const busIds = possibleBusIdsStr.split(",").map((idStr) => {
     const busId = Number(idStr);
     if (isNaN(busId)) return 1;
     return busId;

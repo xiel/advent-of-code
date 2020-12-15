@@ -50,7 +50,7 @@ function countBagsInShinyGoldBag(rules: Rules) {
 
 function countBagsThatCanContainOneShinyGoldBag(rules: Rules) {
   const bagRules = parseBagRules(rules);
-  const shinyGoldIncludedIn = Array.from(bagRules).filter(([_, canContain]) =>
+  const shinyGoldIncludedIn = Array.from(bagRules).filter(([, canContain]) =>
     canContain().find((contain) => contain.color === "shiny gold")
   );
   return shinyGoldIncludedIn.length;

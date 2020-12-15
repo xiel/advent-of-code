@@ -24,6 +24,7 @@ describe("Day 15 - Rambunctious Recitation", () => {
 
 function playMemory(listStr: string, turnToReturn: number) {
   const initialList = listStr.split(",").map((n) => Number(n));
+
   let mostRecentNum = NaN;
   let turnNo = initialList.length;
 
