@@ -30,7 +30,7 @@ describe("Day 16", () => {
   describe("Part II - Departure. What do you get if you multiply those six values together?", () => {
     test("Input", () => {
       const input = readFileSync(`${__dirname}/fixtures/input.txt`, "utf-8");
-      expect(departureProduct(input)).toEqual(-1);
+      expect(departureProduct(input)).toEqual(650080463519);
     });
   });
 });
@@ -84,7 +84,7 @@ function inRanges(ranges: Range[], num: number) {
 
 function scanningErrorRate(input: string) {
   const { validRanges, nearbyTickets } = parseTicketInfos(input);
-  const validRangesEntries = [...validRanges.entries()];
+  const validRangesEntries = [...validRanges];
   const inValidValues: number[] = [];
 
   nearbyTickets.forEach((nearbyTicket) => {
@@ -101,39 +101,61 @@ function scanningErrorRate(input: string) {
 // part II
 function departureProduct(input: string) {
   const { validRanges, nearbyTickets, myTicket } = parseTicketInfos(input);
-  const validRangesEntries = [...validRanges.entries()];
+  const validRangesEntries = [...validRanges];
   const validNearbyTickets = nearbyTickets.filter((nearbyTicket) =>
     nearbyTicket.every((value) =>
       validRangesEntries.find(([_, ranges]) => inRanges(ranges, value))
     )
   );
 
-  const indexesForFields = new Map();
-  let currentIndex = 0;
+  const countMatchingTicketsPerField = new Map<string, Map<number, number>>();
+  const ticketsToCheck = [myTicket, ...validNearbyTickets];
 
-  while (currentIndex < myTicket.length) {
-    const matchedField = validRangesEntries.find(([label, ranges]) => {
-      return validNearbyTickets.every((ticket) =>
-        inRanges(ranges, ticket[currentIndex])
-      );
+  ticketsToCheck.forEach((ticket) => {
+    ticket.forEach((value, index) => {
+      validRangesEntries.forEach(([label, ranges]) => {
+        if (inRanges(ranges, value)) {
+          const current =
+            countMatchingTicketsPerField.get(label) ||
+            new Map<number, number>();
+
+          current.set(index, (current.get(index) || 0) + 1);
+          countMatchingTicketsPerField.set(label, current);
+        }
+      });
     });
+  });
 
-    if (matchedField) {
-      indexesForFields.set(matchedField[0], currentIndex);
+  const validIndexesPerField = [...countMatchingTicketsPerField]
+    .map(
+      ([label, indexMap]) =>
+        [
+          label,
+          new Set(
+            [...indexMap]
+              .filter(([_, count]) => count === ticketsToCheck.length)
+              .map(([index]) => index)
+          ),
+        ] as const
+    )
+    .sort(([, setA], [, setB]) => [...setA].length - [...setB].length);
+
+  const indexesForFields = new Map<string, number>();
+  const usedSet = new Set<number>();
+
+  validIndexesPerField.forEach(([label, indexSet]) => {
+    const remaining = [...indexSet].filter((i) => !usedSet.has(i));
+
+    if (remaining.length === 1) {
+      indexesForFields.set(label, remaining[0]);
+      usedSet.add(remaining[0]);
+    } else {
+      throw Error("multiple ways possible");
     }
-    currentIndex++;
-  }
+  });
 
-  console.log(`indexesForFields`, indexesForFields);
-
-  return [...indexesForFields.entries()].reduce(
-    (acc, [fieldLabel, fieldIndex]) => {
-      if (!fieldLabel.startsWith("departure")) return acc;
-
-      console.log(`fieldLabel, fieldIndex`, fieldLabel, fieldIndex);
-
-      return acc * myTicket[fieldIndex];
-    },
-    1
-  );
+  return [...indexesForFields].reduce((acc, [fieldLabel, fieldIndex]) => {
+    if (!fieldLabel.startsWith("departure")) return acc;
+    return acc * myTicket[fieldIndex];
+  }, 1);
 }
