@@ -28,12 +28,9 @@ describe("Day 16", () => {
   });
 
   describe("Part II - Departure. What do you get if you multiply those six values together?", () => {
-    test("Example", () => {
-      // ...
-    });
-
     test("Input", () => {
-      // ...
+      const input = readFileSync(`${__dirname}/fixtures/input.txt`, "utf-8");
+      expect(departureProduct(input)).toEqual(-1);
     });
   });
 });
@@ -41,7 +38,7 @@ describe("Day 16", () => {
 type Range = [number, number];
 
 function parseTicketInfos(input: string) {
-  const [rulesStr, _myTicketStr, nearbyTicketsStr] = input
+  const [rulesStr, myTicketStr, nearbyTicketsStr] = input
     .split("\n\n")
     .map((group) =>
       group
@@ -68,8 +65,11 @@ function parseTicketInfos(input: string) {
     .slice(1)
     .map((ticketNumStr) => ticketNumStr.split(",").map((n) => Number(n)));
 
+  const myTicket = myTicketStr[1].split(",").map((n) => Number(n));
+
   return {
     validRanges,
+    myTicket,
     nearbyTickets,
   };
 }
@@ -87,8 +87,8 @@ function scanningErrorRate(input: string) {
   const validRangesEntries = [...validRanges.entries()];
   const inValidValues: number[] = [];
 
-  nearbyTickets.forEach((values) => {
-    values.forEach((value) => {
+  nearbyTickets.forEach((nearbyTicket) => {
+    nearbyTicket.forEach((value) => {
       if (!validRangesEntries.find(([_, ranges]) => inRanges(ranges, value))) {
         inValidValues.push(value);
       }
@@ -96,4 +96,44 @@ function scanningErrorRate(input: string) {
   });
 
   return inValidValues.reduce((a, b) => a + b, 0);
+}
+
+// part II
+function departureProduct(input: string) {
+  const { validRanges, nearbyTickets, myTicket } = parseTicketInfos(input);
+  const validRangesEntries = [...validRanges.entries()];
+  const validNearbyTickets = nearbyTickets.filter((nearbyTicket) =>
+    nearbyTicket.every((value) =>
+      validRangesEntries.find(([_, ranges]) => inRanges(ranges, value))
+    )
+  );
+
+  const indexesForFields = new Map();
+  let currentIndex = 0;
+
+  while (currentIndex < myTicket.length) {
+    const matchedField = validRangesEntries.find(([label, ranges]) => {
+      return validNearbyTickets.every((ticket) =>
+        inRanges(ranges, ticket[currentIndex])
+      );
+    });
+
+    if (matchedField) {
+      indexesForFields.set(matchedField[0], currentIndex);
+    }
+    currentIndex++;
+  }
+
+  console.log(`indexesForFields`, indexesForFields);
+
+  return [...indexesForFields.entries()].reduce(
+    (acc, [fieldLabel, fieldIndex]) => {
+      if (!fieldLabel.startsWith("departure")) return acc;
+
+      console.log(`fieldLabel, fieldIndex`, fieldLabel, fieldIndex);
+
+      return acc * myTicket[fieldIndex];
+    },
+    1
+  );
 }
