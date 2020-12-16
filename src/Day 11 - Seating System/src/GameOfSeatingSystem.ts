@@ -36,7 +36,8 @@ const around = Object.freeze([
 export function gameOfSeatingSystem(
   initialSeatMap: SeatMap,
   newRules = false,
-  onTick?: (seatMap: SeatMap) => void
+  onTick?: (seatMap: SeatMap) => void,
+  useAnimationFrame = false
 ) {
   const width = initialSeatMap[0].length;
   const height = initialSeatMap.length;
@@ -80,7 +81,11 @@ export function gameOfSeatingSystem(
         currentSeatMap
       );
 
-      return tick();
+      if (useAnimationFrame) {
+        requestAnimationFrame(() => tick());
+      } else {
+        return tick();
+      }
     }
 
     return currentSeatMap;

@@ -1,32 +1,43 @@
-// @ts-expect-error - currently no txt types
-import seatsFile from "../test/fixtures/input.txt";
 import { gameOfSeatingSystem, SeatMap } from "./GameOfSeatingSystem";
+import list from "./input";
 
-fetch(seatsFile)
-  .then((res) => res.text())
-  .then((list) => {
-    const splitSeats = list
-      .split("\n")
-      .filter(Boolean)
-      .map((row) => row.split(""));
+let newRules = false;
+let stop = start();
 
-    const frames: SeatMap[] = [];
+document.addEventListener("dblclick", () => {
+  stop();
+  newRules = !newRules;
+  stop = start();
+});
 
-    gameOfSeatingSystem(splitSeats, false, (map) => frames.push(map));
-    renderNextFrame();
+function start() {
+  const frames: SeatMap[] = [];
+  const splitSeats = list
+    .split("\n")
+    .filter(Boolean)
+    .map((row) => row.split(""));
 
-    function renderNextFrame() {
-      const frame = frames.shift();
+  let rafID = requestAnimationFrame(renderNextFrame);
+  let timeoutID = -1;
 
-      if (frame) {
-        requestAnimationFrame(() => {
-          document.body.innerHTML = frame
-            .map((row) => row.join(""))
-            .join("<br/>");
+  function renderNextFrame() {
+    const frame = frames.shift();
 
-          setTimeout(() => renderNextFrame(), 100);
-        });
-      }
+    if (frame) {
+      document.body.innerHTML = frame.map((row) => row.join("")).join("<br/>");
+
+      timeoutID = Number(
+        setTimeout(() => {
+          rafID = requestAnimationFrame(renderNextFrame);
+        }, 250)
+      );
     }
-  })
-  .catch(console.error);
+  }
+
+  gameOfSeatingSystem(splitSeats, newRules, (map) => frames.push(map), true);
+
+  return () => {
+    clearTimeout(timeoutID);
+    cancelAnimationFrame(rafID);
+  };
+}
