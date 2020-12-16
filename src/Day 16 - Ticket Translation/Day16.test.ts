@@ -1,24 +1,13 @@
 import { readFileSync } from "fs";
 
-const example = `
-class: 1-3 or 5-7
-row: 6-11 or 33-44
-seat: 13-40 or 45-50
-
-your ticket:
-7,1,14
-
-nearby tickets:
-7,3,47
-40,4,50
-55,2,20
-38,6,12
-`;
-
-describe("Day 16", () => {
+describe("Day 16 - Ticket Translation", () => {
   describe("Part I - What is your ticket scanning error rate?", () => {
     test("Example", () => {
-      expect(scanningErrorRate(example)).toEqual(71);
+      expect(
+        scanningErrorRate(
+          readFileSync(`${__dirname}/fixtures/example.txt`, "utf-8")
+        )
+      ).toEqual(71);
     });
 
     test("Input", () => {
@@ -108,50 +97,49 @@ function departureProduct(input: string) {
     )
   );
 
-  const countMatchingTicketsPerField = new Map<string, Map<number, number>>();
+  const countMatchingTicketsPerField = new Map<string, number[]>();
   const ticketsToCheck = [myTicket, ...validNearbyTickets];
 
   ticketsToCheck.forEach((ticket) => {
     ticket.forEach((value, index) => {
       validRangesEntries.forEach(([label, ranges]) => {
         if (inRanges(ranges, value)) {
-          const current =
-            countMatchingTicketsPerField.get(label) ||
-            new Map<number, number>();
-
-          current.set(index, (current.get(index) || 0) + 1);
+          const current = countMatchingTicketsPerField.get(label) || [];
+          current[index] = (current[index] || 0) + 1;
           countMatchingTicketsPerField.set(label, current);
         }
       });
     });
   });
 
-  const validIndexesPerField = [...countMatchingTicketsPerField]
+  const validFieldIndexesPerField = [...countMatchingTicketsPerField]
     .map(
-      ([label, indexMap]) =>
+      ([fieldName, matchingTicketsCountsPerIndex]) =>
         [
-          label,
-          new Set(
-            [...indexMap]
-              .filter(([_, count]) => count === ticketsToCheck.length)
-              .map(([index]) => index)
-          ),
+          fieldName,
+          matchingTicketsCountsPerIndex
+            // index in the array is index in the ticket for which the count is
+            .map((count, fieldIndex) => [count, fieldIndex])
+            // remove counts, where not all tickets were matched for (value was not in range)
+            .filter(([count]) => count === ticketsToCheck.length)
+            // only need the indexes from here on
+            .map(([, fieldIndex]) => fieldIndex),
         ] as const
     )
-    .sort(([, setA], [, setB]) => [...setA].length - [...setB].length);
+    // sort fields so that least possible indexes are on top
+    .sort(([, arrA], [, arrB]) => arrA.length - arrB.length);
 
   const indexesForFields = new Map<string, number>();
-  const usedSet = new Set<number>();
+  const assignedIndexes = new Set<number>();
 
-  validIndexesPerField.forEach(([label, indexSet]) => {
-    const remaining = [...indexSet].filter((i) => !usedSet.has(i));
+  validFieldIndexesPerField.forEach(([label, possibleIndexes]) => {
+    const remaining = possibleIndexes.filter((i) => !assignedIndexes.has(i));
 
-    if (remaining.length === 1) {
-      indexesForFields.set(label, remaining[0]);
-      usedSet.add(remaining[0]);
-    } else {
-      throw Error("multiple ways possible");
-    }
+    if (remaining.length !== 1)
+      throw Error("multiple ways possible: " + remaining.length);
+
+    indexesForFields.set(label, remaining[0]);
+    assignedIndexes.add(remaining[0]);
   });
 
   return [...indexesForFields].reduce((acc, [fieldLabel, fieldIndex]) => {
