@@ -1,4 +1,4 @@
-import { readFileIntoLines } from "../utils/readFile";
+import { readFileIntoLines } from "../../utils/readFile";
 import { ConwayCubes } from "./ConwayCubes";
 import { ConwayHyperCubes } from "./ConwayHyperCube";
 

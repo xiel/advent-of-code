@@ -37,7 +37,7 @@ export function ConwayCubes({
     });
   }
 
-  function cycle() {
+  async function cycle() {
     cycleCount++;
 
     const changeActions: ChangeAction[] = [];
@@ -76,10 +76,10 @@ export function ConwayCubes({
     });
 
     changeActions.forEach((changeAction) => changeAction());
-    onCycle && onCycle(cycleCount, activeCells);
+    onCycle && (await onCycle(cycleCount, activeCells));
 
     if (changeActions.length && cycleCount < stopAfterCycles) {
-      cycle();
+      await cycle();
     }
   }
 
