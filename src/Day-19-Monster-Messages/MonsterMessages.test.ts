@@ -68,11 +68,11 @@ describe("Day 19", () => {
       ).toEqual(12);
     });
 
-    test.skip("Input", () => {
+    test("Input", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
       expect(
         countMessagesMatchingRule(parseRulesAndMessages(input, updateRules))
-      ).toEqual(0);
+      ).toEqual(287);
     });
   });
 });

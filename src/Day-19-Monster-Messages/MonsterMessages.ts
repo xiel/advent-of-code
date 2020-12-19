@@ -5,77 +5,71 @@ export function parseRulesAndMessages(
   const messages = groups[1].split("\n").filter(Boolean);
   let rules = groups[0].split("\n").filter(Boolean);
   const ruleMap: RuleMap = new Map();
-  const resultMap = new Map<string, string | null>();
+  const resultMap = new Map<string, string[]>();
 
-  rules = updateRules ? updateRules(rules) : rules;
-
-  rules.forEach((ruleStr) => {
-    const [ruleIndexStr, ruleValue] = ruleStr.split(": ");
-    const ruleIndex = Number(ruleIndexStr);
-    const subRuleOptions = ruleValue
-      .split(" | ")
-      .map((o) => o.split(" ").map((n) => parseInt(n)));
-
-    if (ruleIndex === 8 || ruleIndex === 11) {
-      console.log(`subRuleOptions`, subRuleOptions);
-    }
-
-    const charValue = ruleValue.includes('"')
-      ? unquote(ruleValue.trim())
-      : undefined;
-
-    if (charValue) {
-      ruleMap.set(ruleIndex, matchCharRule);
-    } else {
-      ruleMap.set(ruleIndex, matchRule);
-    }
-
-    function matchRule(str: string): string | null {
-      const key = `${ruleIndex}-` + str;
-
-      if (resultMap.has(key)) {
-        return resultMap.get(key)!;
-      }
-
-      const matches = subRuleOptions
-        .flatMap((ruleIndexSequence) => {
-          let matchedStr = "";
-
-          try {
-            ruleIndexSequence.reduce((currentRest, ruleI) => {
-              const matchedPartStr = getRule(ruleI)(currentRest);
-
-              if (!matchedPartStr) throw Error("no match found");
-
-              matchedStr += matchedPartStr;
-              return removeMatchedPart(currentRest, matchedPartStr);
-            }, str);
-          } catch (e) {
-            return [];
-          }
-
-          return matchedStr ? matchedStr : [];
-        })
-        // make this algo greedy, the longest match is the one we want :)
-        .sort((sA, sB) => sB.length - sA.length);
-
-      const result = matches.length ? matches[0] : null;
-
-      resultMap.set(key, result);
-
-      return result;
-    }
-
-    function matchCharRule(str: string): string | null {
-      if (!charValue) throw Error("charValue missing");
-      return str.startsWith(charValue) ? charValue : null;
-    }
-  });
+  init();
 
   return {
     ruleMap,
     messages,
   };
+
+  function init() {
+    // this this for part two
+    rules = updateRules ? updateRules(rules) : rules;
+
+    rules.forEach((ruleStr) => {
+      const [ruleIndexStr, ruleValue] = ruleStr.split(": ");
+      const ruleIndex = Number(ruleIndexStr);
+      const subRuleOptions = ruleValue
+        .split(" | ")
+        .map((o) => o.split(" ").map((n) => parseInt(n)));
+
+      const charValue = ruleValue.includes('"')
+        ? unquote(ruleValue.trim())
+        : undefined;
+
+      if (charValue) {
+        ruleMap.set(ruleIndex, matchCharRule);
+      } else {
+        ruleMap.set(ruleIndex, matchRule);
+      }
+
+      function matchRule(str: string): string[] {
+        const key = `${ruleIndex}-` + str;
+
+        if (resultMap.has(key)) {
+          return resultMap.get(key)!;
+        }
+
+        const matches = subRuleOptions.flatMap((ruleIdSequence) => {
+          let matchables: { matched: string; rest: string }[] = [
+            { matched: "", rest: str },
+          ];
+
+          for (const ruleId of ruleIdSequence) {
+            matchables = matchables.flatMap(({ matched, rest }) => {
+              return getRule(ruleId)(rest).map((matchedPart) => ({
+                matched: matched + matchedPart,
+                rest: removeMatchedPart(rest, matchedPart),
+              }));
+            });
+          }
+
+          return matchables.map((m) => m.matched);
+        });
+
+        resultMap.set(key, matches);
+
+        return matches;
+      }
+
+      function matchCharRule(str: string): string[] {
+        if (!charValue) throw Error("charValue missing");
+        return str.startsWith(charValue) ? [charValue] : [];
+      }
+    });
+  }
 
   function getRule(i: number) {
     return ruleMap.get(i)!;
@@ -87,7 +81,7 @@ export function parseRulesAndMessages(
 }
 
 type RuleMap = Map<number, MatchRule>;
-type MatchRule = (str: string) => string | null;
+type MatchRule = (str: string) => string[];
 
 // How many messages completely match rule 0
 export function countMessagesMatchingRule({
@@ -99,7 +93,7 @@ export function countMessagesMatchingRule({
   rule?: number;
 }) {
   const matchRuleZerro = ruleMap.get(0)!;
-  const validMessages = messages.filter((m) => matchRuleZerro(m) === m);
+  const validMessages = messages.filter((m) => matchRuleZerro(m).includes(m));
   return validMessages.length;
 }
 
