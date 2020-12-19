@@ -1,3 +1,20 @@
+type RuleMap = Map<number, MatchRule>;
+type MatchRule = (str: string) => string[];
+type MatchState = { matched: string; rest: string };
+
+// How many messages completely match rule 0?
+export function countMessagesMatchingRule({
+  messages,
+  ruleMap,
+}: {
+  messages: string[];
+  ruleMap: RuleMap;
+}) {
+  const matchRuleZerro = ruleMap.get(0)!;
+  const validMessages = messages.filter((m) => matchRuleZerro(m).includes(m));
+  return validMessages.length;
+}
+
 export function parseRulesAndMessages(
   groups: string[],
   updateRules?: (rules: string[]) => string[]
@@ -7,14 +24,14 @@ export function parseRulesAndMessages(
   const ruleMap: RuleMap = new Map();
   const resultMap = new Map<string, string[]>();
 
-  init();
+  initRules();
 
   return {
     ruleMap,
     messages,
   };
 
-  function init() {
+  function initRules() {
     // this this for part two
     rules = updateRules ? updateRules(rules) : rules;
 
@@ -43,12 +60,10 @@ export function parseRulesAndMessages(
         }
 
         const matches = subRuleOptions.flatMap((ruleIdSequence) => {
-          let matchables: { matched: string; rest: string }[] = [
-            { matched: "", rest: str },
-          ];
+          let matchStates: MatchState[] = [{ matched: "", rest: str }];
 
           for (const ruleId of ruleIdSequence) {
-            matchables = matchables.flatMap(({ matched, rest }) => {
+            matchStates = matchStates.flatMap(({ matched, rest }) => {
               return getRule(ruleId)(rest).map((matchedPart) => ({
                 matched: matched + matchedPart,
                 rest: removeMatchedPart(rest, matchedPart),
@@ -56,7 +71,7 @@ export function parseRulesAndMessages(
             });
           }
 
-          return matchables.map((m) => m.matched);
+          return matchStates.map((m) => m.matched);
         });
 
         resultMap.set(key, matches);
@@ -78,23 +93,6 @@ export function parseRulesAndMessages(
   function removeMatchedPart(str: string, usedStr: string) {
     return str.replace(usedStr, "");
   }
-}
-
-type RuleMap = Map<number, MatchRule>;
-type MatchRule = (str: string) => string[];
-
-// How many messages completely match rule 0
-export function countMessagesMatchingRule({
-  messages,
-  ruleMap,
-}: {
-  messages: string[];
-  ruleMap: RuleMap;
-  rule?: number;
-}) {
-  const matchRuleZerro = ruleMap.get(0)!;
-  const validMessages = messages.filter((m) => matchRuleZerro(m).includes(m));
-  return validMessages.length;
 }
 
 function unquote(str: string) {
