@@ -44,17 +44,35 @@ describe("Day 19", () => {
 
   describe("Part II", () => {
     test("Example", () => {
-      const input = readFileIntoGroups(`${__dirname}/fixtures/example.txt`);
+      const input = readFileIntoGroups(`${__dirname}/fixtures/example2.txt`);
       expect(countMessagesMatchingRule(parseRulesAndMessages(input))).toEqual(
-        2
+        3
       );
     });
 
-    test("Input", () => {
+    const updateRules = (rules: string[]) =>
+      rules.map((rule) => {
+        if (rule.startsWith("8: ")) {
+          return "8: 42 | 42 8";
+        }
+        if (rule.startsWith("11: ")) {
+          return "11: 42 31 | 42 11 31";
+        }
+        return rule;
+      });
+
+    test("Example (Updated Rules)", () => {
+      const input = readFileIntoGroups(`${__dirname}/fixtures/example2.txt`);
+      expect(
+        countMessagesMatchingRule(parseRulesAndMessages(input, updateRules))
+      ).toEqual(12);
+    });
+
+    test.skip("Input", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
-      expect(countMessagesMatchingRule(parseRulesAndMessages(input))).toEqual(
-        122
-      );
+      expect(
+        countMessagesMatchingRule(parseRulesAndMessages(input, updateRules))
+      ).toEqual(0);
     });
   });
 });

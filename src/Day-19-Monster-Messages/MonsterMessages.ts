@@ -1,7 +1,13 @@
-export function parseRulesAndMessages(groups: string[]) {
+export function parseRulesAndMessages(
+  groups: string[],
+  updateRules?: (rules: string[]) => string[]
+) {
   const messages = groups[1].split("\n").filter(Boolean);
-  const rules = groups[0].split("\n").filter(Boolean);
+  let rules = groups[0].split("\n").filter(Boolean);
   const ruleMap: RuleMap = new Map();
+  const resultMap = new Map<string, string | null>();
+
+  rules = updateRules ? updateRules(rules) : rules;
 
   rules.forEach((ruleStr) => {
     const [ruleIndexStr, ruleValue] = ruleStr.split(": ");
@@ -9,6 +15,10 @@ export function parseRulesAndMessages(groups: string[]) {
     const subRuleOptions = ruleValue
       .split(" | ")
       .map((o) => o.split(" ").map((n) => parseInt(n)));
+
+    if (ruleIndex === 8 || ruleIndex === 11) {
+      console.log(`subRuleOptions`, subRuleOptions);
+    }
 
     const charValue = ruleValue.includes('"')
       ? unquote(ruleValue.trim())
@@ -21,6 +31,12 @@ export function parseRulesAndMessages(groups: string[]) {
     }
 
     function matchRule(str: string): string | null {
+      const key = `${ruleIndex}-` + str;
+
+      if (resultMap.has(key)) {
+        return resultMap.get(key)!;
+      }
+
       const matches = subRuleOptions
         .flatMap((ruleIndexSequence) => {
           let matchedStr = "";
@@ -43,7 +59,11 @@ export function parseRulesAndMessages(groups: string[]) {
         // make this algo greedy, the longest match is the one we want :)
         .sort((sA, sB) => sB.length - sA.length);
 
-      return matches.length ? matches[0] : null;
+      const result = matches.length ? matches[0] : null;
+
+      resultMap.set(key, result);
+
+      return result;
     }
 
     function matchCharRule(str: string): string | null {
