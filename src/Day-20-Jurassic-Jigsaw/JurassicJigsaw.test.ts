@@ -65,9 +65,11 @@ describe("Day 19 - Jurassic Jigsaw", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/example.txt`);
       expect(calcWaterRoughness(fixImageTiles(input))).toEqual(273);
     });
-    test.skip("Input", () => {
+    test("Input", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
-      expect(calcWaterRoughness(fixImageTiles(input))).toMatchInlineSnapshot();
+      expect(calcWaterRoughness(fixImageTiles(input))).toMatchInlineSnapshot(
+        `1692`
+      );
     });
   });
 });

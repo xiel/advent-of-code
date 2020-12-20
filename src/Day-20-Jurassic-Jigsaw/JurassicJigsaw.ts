@@ -239,15 +239,60 @@ export function productOfCornerTiles(connectedTiles: Tile[]) {
   return corners.reduce((acc, tile) => acc * tile.id, 1);
 }
 
-const pattern = `
+const seaMonster = `
                   # 
 #    ##    ##    ###
  #  #  #  #  #  #   
 `;
 
+type ImageData = string[][];
+type Coord = [number, number];
+
+function parsePattern(patternStr: string) {
+  const hashCoords: Coord[] = [];
+  const patternLines = patternStr.split("\n").filter(Boolean);
+
+  patternLines.forEach((line, y) => {
+    for (const [x, entry] of Object.entries(line)) {
+      if (entry === "#") {
+        hashCoords.push([Number(x), y]);
+      }
+    }
+  });
+
+  const patternWidth = patternLines[0].length;
+  const patternHeight = patternLines.length;
+  const patternChars = hashCoords.length;
+
+  const matchPattern = ([fromX, fromY]: Coord, image: ImageData) => {
+    return hashCoords.every(([x, y]) => {
+      return image[fromY + y][fromX + x] === "#";
+    });
+  };
+
+  return { matchPattern, patternWidth, patternHeight, patternChars };
+}
+
+function noopImage(data: ImageData) {
+  return data;
+}
+
+function flipX(data: ImageData) {
+  return data.map((s) => [...s].reverse());
+}
+
+function flipY(data: ImageData) {
+  return [...data].reverse();
+}
+
+function rotate(data: ImageData) {
+  const widthHeight = data.length === data[0].length ? data.length : NaN;
+  return data.map((s, y) => s.map((_, x) => data[x][widthHeight - 1 - y]));
+}
+
 export function calcWaterRoughness(connectedTiles: Tile[]): number {
   const tilesWidthHeight = Math.sqrt(connectedTiles.length);
-  const tilesWithBordersRemoved = connectedTiles.map((tile) => {
+  const newTiles = connectedTiles.map((tile) => {
     // remove first and last row & remove first and last char per line
     const data = tile.data.slice(1, -1).map((row) => row.slice(1, -1));
     return {
@@ -256,17 +301,18 @@ export function calcWaterRoughness(connectedTiles: Tile[]): number {
       originalData: tile.data,
     } as Tile;
   });
-  const topLeftTile = tilesWithBordersRemoved.find(
+
+  const topLeftTile = newTiles.find(
     (t) => !t.connections[Connection.top] && !t.connections[Connection.left]
   );
 
   if (!topLeftTile) throw Error("no top left tile");
 
-  const tileSize = tilesWithBordersRemoved[0].data[0].length;
-  const finalImageWidthHeight = tilesWidthHeight * tileSize;
+  const tileSize = newTiles[0].data[0].length;
+  const imageSize = tilesWidthHeight * tileSize;
 
-  let image = new Array<string[]>(finalImageWidthHeight).fill(
-    new Array<string>(finalImageWidthHeight).fill("")
+  let image = new Array<string[]>(imageSize).fill(
+    new Array<string>(imageSize).fill("")
   );
 
   // add image data via right and bottom connections to final image
@@ -298,26 +344,77 @@ export function calcWaterRoughness(connectedTiles: Tile[]): number {
       })
     );
 
-    console.log(image.map((r) => r.join("")));
+    const nextRightTileId = tile.connections[Connection.right]?.id;
+    const nextBottomTileId = tile.connections[Connection.bottom]?.id;
 
-    Promise.resolve().then(() => {
-      const nextRightTile = tile.connections[Connection.right];
-      const nextBottomTile = tile.connections[Connection.bottom];
-
-      if (nextRightTile) {
-        addTileToImage(nextRightTile, [startX + tileSize, startY]);
-      }
-      if (nextBottomTile) {
-        addTileToImage(nextBottomTile, [startX, startY + tileSize]);
-      }
-    });
+    if (nextBottomTileId) {
+      addTileToImage(newTiles.find((t) => t.id === nextBottomTileId)!, [
+        startX,
+        startY + tileSize,
+      ]);
+    }
+    if (nextRightTileId) {
+      addTileToImage(newTiles.find((t) => t.id === nextRightTileId)!, [
+        startX + tileSize,
+        startY,
+      ]);
+    }
   }
 
-  console.log(`finalImageWidthHeight`, finalImageWidthHeight);
-  console.log(`tileSizeReduced`, tileSize);
-  console.log(`tilesWithBordersRemoved`, tilesWithBordersRemoved.length);
-  console.log(`addedToImageSet`, addedToImageSet.size);
-  console.log(image.map((r) => r.join("")));
+  deepFreeze(image);
 
-  return 0;
+  const {
+    matchPattern,
+    patternWidth,
+    patternHeight,
+    patternChars,
+  } = parsePattern(seaMonster);
+
+  const maxX = imageSize - patternWidth - 1;
+  const maxY = imageSize - patternHeight - 1;
+
+  function countMonsters(img: ImageData) {
+    let currentImg = img;
+
+    const flipActions = [noopImage, flipY, flipX];
+    const rotationAction = [noopImage, rotate, rotate, rotate, rotate];
+
+    for (const flipAction of flipActions) {
+      currentImg = flipAction(currentImg);
+
+      for (const rotAction of rotationAction) {
+        currentImg = rotAction(currentImg);
+
+        let monstersFound = 0;
+        for (let y = 0; y <= maxY; y++) {
+          for (let x = 0; x <= maxX; x++) {
+            if (matchPattern([x, y], currentImg)) {
+              monstersFound++;
+            }
+          }
+        }
+
+        if (monstersFound) {
+          console.log(currentImg.map((r) => r.join("")));
+
+          return monstersFound;
+        }
+      }
+    }
+
+    return 0;
+  }
+
+  const monstersFound = countMonsters(image);
+  const monstersChars = patternChars * monstersFound;
+  const roughWaterChars = image
+    .flatMap((r) => r)
+    .reduce((acc, char) => (char === "#" ? acc + 1 : acc), 0);
+
+  console.log(`monstersFound`, monstersFound);
+  console.log(`patternChars`, patternChars);
+  console.log(`monstersChars`, monstersChars);
+  console.log(`roughWaterChars`, roughWaterChars);
+
+  return roughWaterChars - monstersChars;
 }
