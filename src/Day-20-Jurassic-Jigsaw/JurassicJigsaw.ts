@@ -124,27 +124,25 @@ const noop = () => {
 
 function doConnect(currentTile: Tile, connection: Connection, withTile: Tile) {
   const { flipX, flipY, rotate } = withTile;
-  const reversingActions = [noop, flipY, flipX];
+  const flipActions = [noop, flipY, flipX];
   const rotationAction = [noop, rotate, rotate, rotate, rotate];
   const tileEdge = getEdgeForConnection(currentTile, connection);
 
-  for (const revAction of reversingActions) {
+  for (const revAction of flipActions) {
     revAction();
     for (const rotAction of rotationAction) {
       rotAction();
-      for (const revAction2 of reversingActions) {
-        revAction2();
 
-        const otherTileEdge = getEdgeForConnection(
-          withTile,
-          counterConnection(connection)
-        );
+      const otherTileEdge = getEdgeForConnection(
+        withTile,
+        counterConnection(connection)
+      );
 
-        if (tileEdge === otherTileEdge) {
-          return true;
-        }
+      if (tileEdge === otherTileEdge) {
+        return true;
       }
     }
+    revAction();
   }
 
   return false;
@@ -233,7 +231,93 @@ export function productOfCornerTiles(connectedTiles: Tile[]) {
     (tile) => tile.connections.filter(Boolean).length === 2
   );
 
-  console.log(`corners`, corners);
+  if (corners.length !== 4)
+    throw Error(
+      "looks like we have too many tiles connected to only 2 other tiles"
+    );
 
   return corners.reduce((acc, tile) => acc * tile.id, 1);
+}
+
+const pattern = `
+                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   
+`;
+
+export function calcWaterRoughness(connectedTiles: Tile[]): number {
+  const tilesWidthHeight = Math.sqrt(connectedTiles.length);
+  const tilesWithBordersRemoved = connectedTiles.map((tile) => {
+    // remove first and last row & remove first and last char per line
+    const data = tile.data.slice(1, -1).map((row) => row.slice(1, -1));
+    return {
+      ...tile,
+      data,
+      originalData: tile.data,
+    } as Tile;
+  });
+  const topLeftTile = tilesWithBordersRemoved.find(
+    (t) => !t.connections[Connection.top] && !t.connections[Connection.left]
+  );
+
+  if (!topLeftTile) throw Error("no top left tile");
+
+  const tileSize = tilesWithBordersRemoved[0].data[0].length;
+  const finalImageWidthHeight = tilesWidthHeight * tileSize;
+
+  let image = new Array<string[]>(finalImageWidthHeight).fill(
+    new Array<string>(finalImageWidthHeight).fill("")
+  );
+
+  // add image data via right and bottom connections to final image
+  const addedToImageSet = new Set<Tile>();
+
+  addTileToImage(topLeftTile, [0, 0]);
+
+  function addTileToImage(tile: Tile, startFillAt: [number, number]) {
+    if (addedToImageSet.has(tile)) return;
+    addedToImageSet.add(tile);
+
+    const [startX, startY] = startFillAt;
+
+    image = image.map((row, imageY) =>
+      row.map((p, imageX) => {
+        const ret = p || "-";
+
+        if (imageX < startX || imageX > startX + tileSize - 1) return ret;
+        if (imageY < startY || imageY > startY + tileSize - 1) return ret;
+
+        // project image x,y to tile x,y by subtracting the start indexes
+        const [projX, projY] = [imageX - startX, imageY - startY];
+
+        const tileDataAtPoint = tile.data[projY][projX];
+
+        if (!tileDataAtPoint) throw Error("unable to read tile at point");
+
+        return tileDataAtPoint;
+      })
+    );
+
+    console.log(image.map((r) => r.join("")));
+
+    Promise.resolve().then(() => {
+      const nextRightTile = tile.connections[Connection.right];
+      const nextBottomTile = tile.connections[Connection.bottom];
+
+      if (nextRightTile) {
+        addTileToImage(nextRightTile, [startX + tileSize, startY]);
+      }
+      if (nextBottomTile) {
+        addTileToImage(nextBottomTile, [startX, startY + tileSize]);
+      }
+    });
+  }
+
+  console.log(`finalImageWidthHeight`, finalImageWidthHeight);
+  console.log(`tileSizeReduced`, tileSize);
+  console.log(`tilesWithBordersRemoved`, tilesWithBordersRemoved.length);
+  console.log(`addedToImageSet`, addedToImageSet.size);
+  console.log(image.map((r) => r.join("")));
+
+  return 0;
 }

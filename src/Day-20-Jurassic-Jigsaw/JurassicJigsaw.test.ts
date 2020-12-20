@@ -1,5 +1,6 @@
 import { readFileIntoGroups } from "../utils/readFile";
 import {
+  calcWaterRoughness,
   fixImageTiles,
   parseTile,
   productOfCornerTiles,
@@ -51,11 +52,22 @@ describe("Day 19 - Jurassic Jigsaw", () => {
       );
     });
 
-    test("Input", () => {
+    test.skip("Input", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
       expect(productOfCornerTiles(fixImageTiles(input))).toMatchInlineSnapshot(
         `54755174472007`
       );
+    });
+  });
+
+  describe("Part II - How many # are not part of a sea monster?", () => {
+    test("Example", () => {
+      const input = readFileIntoGroups(`${__dirname}/fixtures/example.txt`);
+      expect(calcWaterRoughness(fixImageTiles(input))).toEqual(273);
+    });
+    test.skip("Input", () => {
+      const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
+      expect(calcWaterRoughness(fixImageTiles(input))).toMatchInlineSnapshot();
     });
   });
 });
