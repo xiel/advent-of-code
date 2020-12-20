@@ -411,10 +411,5 @@ export function calcWaterRoughness(connectedTiles: Tile[]): number {
     .flatMap((r) => r)
     .reduce((acc, char) => (char === "#" ? acc + 1 : acc), 0);
 
-  console.log(`monstersFound`, monstersFound);
-  console.log(`patternChars`, patternChars);
-  console.log(`monstersChars`, monstersChars);
-  console.log(`roughWaterChars`, roughWaterChars);
-
   return roughWaterChars - monstersChars;
 }
