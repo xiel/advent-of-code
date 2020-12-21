@@ -52,7 +52,7 @@ describe("Day 19 - Jurassic Jigsaw", () => {
       );
     });
 
-    test.skip("Input", () => {
+    test("Input", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/input.txt`);
       expect(productOfCornerTiles(fixImageTiles(input))).toMatchInlineSnapshot(
         `54755174472007`
