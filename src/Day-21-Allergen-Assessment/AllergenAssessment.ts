@@ -1,14 +1,10 @@
+type Ingredient = string;
+type Allergen = string;
+type IngCandidate = [Allergen, Ingredient[]];
+
 // Each allergen is found in exactly one ingredient.
 // Each ingredient contains zero or one allergen.
 // Allergens aren't always marked;
-// Determine which ingredients cannot possibly contain any of the allergens in your list.
-// How many times do any of those ingredients appear?
-type Ingredient = string;
-type Allergen = string;
-
-// In the above example, none of the ingredients:
-// kfcds, nhms, sbzzf, or trh
-// can contain an allergen.
 export function findAllergenFreeIngredients(ingLists: string[]) {
   const appearancesForAllergens = new Map<Allergen, Map<Ingredient, number>>();
   const totalAppearances = new Map<Ingredient, number>();
@@ -24,7 +20,7 @@ export function findAllergenFreeIngredients(ingLists: string[]) {
         ingredient,
         (totalAppearances.get(ingredient) || 0) + 1
       );
-      // add all ings initially to the "free" list
+      // add all ingredients  to the allegen free list initially
       allergenFreeIngredients.add(ingredient);
     });
 
@@ -39,20 +35,65 @@ export function findAllergenFreeIngredients(ingLists: string[]) {
     });
   });
 
-  [...appearancesForAllergens].forEach(([_, ingAppearedTimesMap]) => {
-    const appearancesMax = Math.max(
-      ...[...ingAppearedTimesMap].map(([_, count]) => count)
+  // Find all ingredients that were most often mentioned with a given allergen
+  const possibleIngCandidatesForAllergens = [...appearancesForAllergens].map(
+    ([allergenName, ingAppearedTimesMap]) => {
+      const appearancesMax = Math.max(
+        ...[...ingAppearedTimesMap].map(([_, count]) => count)
+      );
+
+      const possibleCandidates = [...ingAppearedTimesMap]
+        .filter(([_, count]) => count === appearancesMax)
+        .map(([ingName]) => ingName);
+
+      possibleCandidates.forEach((ingName) =>
+        allergenFreeIngredients.delete(ingName)
+      );
+
+      return [allergenName, possibleCandidates] as IngCandidate;
+    }
+  );
+
+  // Part I:
+  // Determine which ingredients cannot possibly contain any of the allergens in your list.
+  // How many times do any of those ingredients appear?
+  const appearanceCountOfAllergenFreeIngredients = [
+    ...allergenFreeIngredients,
+  ].reduce((acc, name) => acc + totalAppearances.get(name)!, 0);
+
+  // Part II:
+  // Time to stock your raft with supplies. What is your canonical dangerous ingredient list?
+  const finalAllergenToIngList: IngCandidate[] = [];
+  const unassignedAllergenToIngList = new Set(
+    possibleIngCandidatesForAllergens
+  );
+
+  while (unassignedAllergenToIngList.size) {
+    // we can be sure about a allergen matching only one ingredient
+    const finalCandidate = [...unassignedAllergenToIngList].find(
+      (entry) => entry[1].length === 1
     );
 
-    [...ingAppearedTimesMap].forEach(([ingName, count]) => {
-      if (count === appearancesMax) {
-        allergenFreeIngredients.delete(ingName);
-      }
-    });
-  });
+    if (!finalCandidate)
+      throw Error("unable to resolve, missing foundFinalCandidate");
 
-  return [...allergenFreeIngredients].reduce(
-    (acc, name) => acc + totalAppearances.get(name)!,
-    0
-  );
+    finalAllergenToIngList.push(finalCandidate);
+    unassignedAllergenToIngList.delete(finalCandidate);
+
+    // Remove the matched ingredient from all other ingredient lists
+    [...unassignedAllergenToIngList].forEach((entry) => {
+      entry[1] = entry[1].filter((ing) => ing !== finalCandidate[1][0]);
+    });
+  }
+
+  // Arrange the ingredients alphabetically by their allergen and separate them by commas
+  const canonicalDangerousIngredientList = finalAllergenToIngList
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map((e) => e[1])
+    .join(",");
+
+  return {
+    appearanceCountOfAllergenFreeIngredients,
+    canonicalDangerousIngredientList,
+  };
 }
