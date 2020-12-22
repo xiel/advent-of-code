@@ -1,4 +1,4 @@
-export function playCombat(deckStr: string[]) {
+export function getCards(deckStr: string[]) {
   const [playerOne, playerTwo] = deckStr.map((str) =>
     str
       .split("\n")
@@ -6,6 +6,11 @@ export function playCombat(deckStr: string[]) {
       .slice(1)
       .map((n) => Number(n))
   );
+  return [playerOne, playerTwo] as const;
+}
+
+export function playCombat(deckStr: string[]) {
+  const [playerOne, playerTwo] = getCards(deckStr);
 
   while (playerOne.length && playerTwo.length) {
     const cardOne = playerOne.shift()!;
@@ -19,9 +24,10 @@ export function playCombat(deckStr: string[]) {
   }
 
   const winner = playerOne.length ? playerOne : playerTwo;
-  const winnerScore = winner.reduceRight(
+
+  // calc winner score
+  return winner.reduceRight(
     (acc, num, i) => acc + num * (winner.length - i),
     0
   );
-  return winnerScore;
 }
