@@ -34,9 +34,11 @@ function playRecursiveCombat([playerOne, playerTwo]: [number[], number[]]) {
     const cardOne = playerOne.shift()!;
     const cardTwo = playerTwo.shift()!;
 
-    //If both players have at least as many cards remaining in their deck as the value of the card they just drew,
+    // If both players have at least as many cards remaining in their deck as the value of the card they just drew,
     // the winner of the round is determined by playing a new game of Recursive Combat (see below).
     if (playerOne.length >= cardOne && playerTwo.length >= cardTwo) {
+      // each player creates a new deck by making a copy of the next cards in their deck
+      // the quantity of cards copied is equal to the number on the card they drew to trigger the sub-game
       const { winner } = playRecursiveCombat([
         playerOne.slice(0, cardOne),
         playerTwo.slice(0, cardTwo),
