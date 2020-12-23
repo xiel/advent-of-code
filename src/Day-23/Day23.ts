@@ -1,68 +1,82 @@
-export function playCrabCups(startingOrder: string | string[], rounds = 10) {
-  let cups =
-    typeof startingOrder === "string" ? startingOrder.split("") : startingOrder;
+interface Cup {
+  value: number;
+  valueStr: string;
+  next: Cup;
+  prev: Cup;
+}
 
-  const cupNums = cups.map((n) => parseInt(n));
+export function playCrabCups(startingOrder: string | string[], rounds = 10) {
+  const cupStrs =
+    typeof startingOrder === "string" ? startingOrder.split("") : startingOrder;
+  const cupNums = cupStrs.map((n) => parseInt(n));
   const cupsMin = min(cupNums);
   const cupsMax = max(cupNums);
+  const cups = makeCups(cupNums);
+  let currentCup = cups.get(cupNums[0])!;
 
-  let currentCupIndex = 0;
   let round = 0;
-
   while (round < rounds) {
     round++;
-
-    if (round % 100_000 === 0) console.log("round", round);
-
-    const currentCup = cups[currentCupIndex];
-    const currentCupValue = parseInt(currentCup);
+    if (round % 1_000_000 === 0) console.log(`Round #${round}`);
 
     // The crab picks up the three cups that are immediately clockwise of the current cup.
+    const pickedUpCups = [
+      currentCup.next,
+      currentCup.next.next,
+      currentCup.next.next.next,
+    ];
+
     // They are removed from the circle; cup spacing is adjusted as necessary to maintain the circle.
-    const [pickedUpCups, leftOver] = takeOut(3, currentCupIndex + 1, cups);
-
-    cups = leftOver;
-
-    const cupsSet = new Set(cups);
+    const lastPickedUpCup = pickedUpCups[pickedUpCups.length - 1];
+    currentCup.next = lastPickedUpCup.next;
+    lastPickedUpCup.next.prev = currentCup;
 
     // The crab selects a destination cup: the cup with a label equal to the current cup's label minus one.
-    let destinationCupIndex = -1;
-    let destinationCupCandidate = currentCupValue;
+    let destinationCupCandidateValue = currentCup.value - 1;
 
-    while (destinationCupIndex === -1) {
-      // If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up.
-      destinationCupCandidate--;
+    // If this would select one of the cups that was just picked up, the crab will keep subtracting one until it finds a cup that wasn't just picked up.
+    while (
+      !cups.has(destinationCupCandidateValue) ||
+      pickedUpCups.find((c) => c.value === destinationCupCandidateValue)
+    ) {
+      destinationCupCandidateValue--;
 
       // If at any point in this process the value goes below the lowest value on any cup's label, it wraps around to the highest value on any cup's label instead.
-      if (destinationCupCandidate < cupsMin) {
-        destinationCupCandidate = cupsMax;
-      }
-
-      if (cupsSet.has(destinationCupCandidate.toString())) {
-        destinationCupIndex = cups.indexOf(`${destinationCupCandidate}`);
-      } else {
-        destinationCupIndex = -1;
+      if (destinationCupCandidateValue < cupsMin) {
+        destinationCupCandidateValue = cupsMax;
       }
     }
 
+    const destinationCup = cups.get(destinationCupCandidateValue);
+
+    if (!destinationCup) throw Error("destination cup not found");
+
     // The crab places the cups it just picked up so that they are immediately clockwise of the destination cup.
     // They keep the same order as when they were picked up.
-    cups.splice(destinationCupIndex + 1, 0, ...pickedUpCups);
+    const afterInsertCup = destinationCup.next;
+
+    // connect start of the picked up cups
+    destinationCup.next = pickedUpCups[0];
+    pickedUpCups[0].prev = destinationCup;
+
+    // connect end of the picked up cups
+    pickedUpCups[pickedUpCups.length - 1].next = afterInsertCup;
+    afterInsertCup.prev = pickedUpCups[pickedUpCups.length - 1];
 
     // The crab selects a new current cup: the cup which is immediately clockwise of the current cup.
-    currentCupIndex = (cups.indexOf(currentCup) + 1) % cups.length;
+    currentCup = currentCup.next;
   }
 
-  const numsAfterOne = takeOut(
-    cups.length - 1,
-    cups.indexOf("1") + 1,
-    cups
-  )[0].join("");
+  const cupOne = cups.get(1)!;
+  let numsAfterOne = "";
+  let current: Cup = cupOne;
 
-  const productOfNextTwo = takeOut(2, cups.indexOf("1") + 1, cups)[0].reduce(
-    (acc, n) => acc * parseInt(n),
-    1
-  );
+  while (current.next !== cupOne) {
+    current = current.next;
+    numsAfterOne += current.valueStr;
+  }
+
+  const productOfNextTwo = cupOne.next.value * cupOne.next.next.value;
 
   return {
     numsAfterOne,
@@ -70,17 +84,33 @@ export function playCrabCups(startingOrder: string | string[], rounds = 10) {
   };
 }
 
-export function takeOut<T>(count: number, startingAt: number, arr: T[]) {
-  const indexesToRemove = new Array(count)
-    .fill(0)
-    .map((_, i) => (startingAt + i) % arr.length);
+function makeCups(cupNums: number[]) {
+  const cupsMap = new Map<number, Cup>();
+  let prev: Cup | undefined;
 
-  const removedItems: T[] = indexesToRemove.map((i) => arr[i]);
+  // build chain of cups nodes
+  const cups = cupNums.map((value) => {
+    const cup = {
+      value,
+      valueStr: value.toString(),
+      prev,
+    } as Cup;
 
-  const indexesToRemoveSet = new Set(indexesToRemove);
-  const remaining = arr.filter((_, i) => !indexesToRemoveSet.has(i));
+    if (prev) {
+      prev.next = cup;
+    }
 
-  return [removedItems, remaining];
+    prev = cup;
+    return cup;
+  });
+
+  // connect first and last
+  cups[cups.length - 1].next = cups[0];
+  cups[0].prev = cups[cups.length - 1];
+
+  cups.forEach((cup) => cupsMap.set(cup.value, cup));
+
+  return cupsMap;
 }
 
 export function prepareOneMillionCups(startingOrder: string) {
@@ -92,8 +122,6 @@ export function prepareOneMillionCups(startingOrder: string) {
     i++;
     cups.push(`${cupsMax + i}`);
   }
-
-  console.log(`cups`, cups.length);
 
   return cups;
 }
