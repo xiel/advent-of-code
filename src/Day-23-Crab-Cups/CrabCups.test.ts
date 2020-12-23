@@ -1,4 +1,4 @@
-import { playCrabCups, prepareOneMillionCups } from "./Day23";
+import { playCrabCups, prepareOneMillionCups } from "./CrabCups";
 
 describe("Day 23 - Crab Cups", () => {
   describe("Part I - What are the labels on the cups after cup 1?", () => {
