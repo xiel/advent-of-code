@@ -2,7 +2,7 @@ import { readFileIntoGroups } from "../utils/readFile";
 import { playCombat } from "./CrabCombat";
 import { startRecursiveCombat } from "./RecursiveCombat";
 
-describe("Day 21 -  Crab Combat", () => {
+describe("Day 22 -  Crab Combat", () => {
   describe("Part I - Whats the Winners score?", () => {
     test("Example", () => {
       const input = readFileIntoGroups(`${__dirname}/fixtures/example.txt`);
