@@ -13,4 +13,16 @@ describe("Day 24", () => {
       expect(lobbyLayout(input)).toEqual(300);
     });
   });
+
+  describe("Part II", () => {
+    test("Example", () => {
+      const input = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
+      expect(lobbyLayout(input, 100)).toEqual(2208);
+    });
+
+    test("Input", () => {
+      const input = readFileIntoLines(`${__dirname}/fixtures/input.txt`);
+      expect(lobbyLayout(input, 100)).toEqual(3466);
+    });
+  });
 });
