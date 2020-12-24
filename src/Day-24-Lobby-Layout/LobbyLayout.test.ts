@@ -1,7 +1,7 @@
-import { lobbyLayout } from "./Day24";
+import { lobbyLayout } from "./LobbyLayout";
 import { readFileIntoLines } from "../utils/readFile";
 
-describe("Day 24", () => {
+describe("Day 24 - Lobby Layout", () => {
   describe("Part I", () => {
     test("Example", () => {
       const input = readFileIntoLines(`${__dirname}/fixtures/example.txt`);
