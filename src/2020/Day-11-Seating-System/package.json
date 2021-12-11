@@ -1,0 +1,15 @@
+{
+  "name": "day-11",
+  "private": true,
+  "version": "1.0.0",
+  "author": "Felix Leupold",
+  "scripts": {
+    "dev": "node_modules/.bin/parcel src/index.html",
+    "build": "node_modules/.bin/parcel build src/index.html"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "parcel": "^2.0.1",
+    "typescript": "^4.5.2"
+  }
+}
