@@ -1,5 +1,6 @@
 import { readFileIntoLines } from "../../utils/readFile";
 
+// https://adventofcode.com/2021/day/1
 describe("Day 1: Sonar Sweep", () => {
   test("01", () => {
     const depths = readFileIntoLines(__dirname + "/input.txt");
