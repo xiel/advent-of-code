@@ -1,51 +1,42 @@
 import { readExampleIntoLines, readFileIntoLines } from "../../utils/readFile";
 
-const miniExample = `
-  11111
-  19991
-  19191
-  19991
-  11111
-`;
-
-const example = `
-  5483143223
-  2745854711
-  5264556173
-  6141336146
-  6357385478
-  4167524645
-  2176841721
-  6882881134
-  4846848554
-  5283751526
-`;
-
 // https://adventofcode.com/2021/day/11
 describe("Day 11: Dumbo Octopus", () => {
-  test("01 - Example", () => {
-    expect(simulateSteps(readExampleIntoLines(miniExample), 2).flashes).toBe(9);
-    expect(simulateSteps(readExampleIntoLines(example), 100).flashes).toBe(
-      1656
-    );
-  });
+  const miniExample = `
+    11111
+    19991
+    19191
+    19991
+    11111
+  `;
 
-  test("01", () => {
+  const example = `
+    5483143223
+    2745854711
+    5264556173
+    6141336146
+    6357385478
+    4167524645
+    2176841721
+    6882881134
+    4846848554
+    5283751526
+  `;
+
+  test("01 - How many total flashes are there after 100 steps?", () => {
+    expect(runSteps(readExampleIntoLines(miniExample), 2).flashes).toBe(9);
+    expect(runSteps(readExampleIntoLines(example), 100).flashes).toBe(1656);
     expect(
-      simulateSteps(readFileIntoLines(`${__dirname}/input.txt`), 100).flashes
+      runSteps(readFileIntoLines(`${__dirname}/input.txt`), 100).flashes
     ).toBe(1608);
   });
 
-  test("02 - Example", () => {
+  test("02 - What is the first step during which all octopuses flash?", () => {
+    expect(runSteps(readExampleIntoLines(example)).synchronizedAtStep).toBe(
+      195
+    );
     expect(
-      simulateSteps(readExampleIntoLines(example)).synchronizedAtStep
-    ).toBe(195);
-  });
-
-  test("02", () => {
-    expect(
-      simulateSteps(readFileIntoLines(`${__dirname}/input.txt`))
-        .synchronizedAtStep
+      runSteps(readFileIntoLines(`${__dirname}/input.txt`)).synchronizedAtStep
     ).toBe(214);
   });
 });
@@ -69,7 +60,7 @@ function createOctopusState(lines: string[]) {
   };
 }
 
-function simulateSteps(lines: string[], stepsMax = Infinity) {
+function runSteps(lines: string[], stepsMax = Infinity) {
   const { grid, w, h } = createOctopusState(lines);
 
   let stepCount = 0;
@@ -90,9 +81,6 @@ function simulateSteps(lines: string[], stepsMax = Infinity) {
     // First, the energy level of each octopus increases by 1.
     incAll();
 
-    // Then, any octopus with an energy level greater than 9 flashes. This increases the energy level of all adjacent octopuses by 1, including octopuses that are diagonally adjacent.
-    // If this causes an octopus to have an energy level greater than 9, it also flashes. This process continues as long as new octopuses keep having their energy level increased beyond 9.
-    // (An octopus can only flash at most once per step.)
     const flashed = flashAllFull();
 
     // Detect if all octopuses flashed at the same time
@@ -120,31 +108,32 @@ function simulateSteps(lines: string[], stepsMax = Infinity) {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         if (grid[y][x].energyLevel >= 10) {
-          flash(grid[y][x]);
+          flash(grid[y][x], flashed);
         }
       }
     }
 
     return flashed;
+  }
 
-    function flash(o: Octopus) {
-      if (flashed.has(o)) {
-        return;
-      }
-      // ⚡️
-      flashed.add(o);
+  function flash(o: Octopus, flashed: Set<Octopus>) {
+    if (flashed.has(o)) {
+      return;
+    }
 
-      // Increase energy of octopuses in all directions
-      for (let y = -1; y <= 1; y++) {
-        for (let x = -1; x <= 1; x++) {
-          const oAround = grid[o.y + y]?.[o.x + x];
+    // ⚡️
+    flashed.add(o);
 
-          if (oAround) {
-            oAround.energyLevel++;
+    // Increase energy of octopuses in all directions
+    for (let y = -1; y <= 1; y++) {
+      for (let x = -1; x <= 1; x++) {
+        const oAround = grid[o.y + y]?.[o.x + x];
 
-            if (oAround.energyLevel >= 10) {
-              flash(oAround);
-            }
+        if (oAround) {
+          oAround.energyLevel++;
+
+          if (oAround.energyLevel >= 10) {
+            flash(oAround, flashed);
           }
         }
       }
