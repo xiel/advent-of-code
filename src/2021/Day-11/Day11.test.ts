@@ -24,13 +24,29 @@ const example = `
 // https://adventofcode.com/2021/day/11
 describe("Day 11: Dumbo Octopus", () => {
   test("01 - Example", () => {
-    expect(simulateSteps(readExampleIntoLines(miniExample), 2)).toBe(9);
-    expect(simulateSteps(readExampleIntoLines(example), 100)).toBe(1656);
+    expect(simulateSteps(readExampleIntoLines(miniExample), 2).flashes).toBe(9);
+    expect(simulateSteps(readExampleIntoLines(example), 100).flashes).toBe(
+      1656
+    );
   });
 
   test("01", () => {
-    const lines = readFileIntoLines(`${__dirname}/input.txt`);
-    expect(simulateSteps(lines, 100)).toBe(1608);
+    expect(
+      simulateSteps(readFileIntoLines(`${__dirname}/input.txt`), 100).flashes
+    ).toBe(1608);
+  });
+
+  test("02 - Example", () => {
+    expect(
+      simulateSteps(readExampleIntoLines(example)).synchronizedAtStep
+    ).toBe(195);
+  });
+
+  test("02", () => {
+    expect(
+      simulateSteps(readFileIntoLines(`${__dirname}/input.txt`))
+        .synchronizedAtStep
+    ).toBe(214);
   });
 });
 
@@ -53,15 +69,22 @@ function createOctopusState(lines: string[]) {
   };
 }
 
-function simulateSteps(lines: string[], steps: number) {
-  const state = createOctopusState(lines);
-  let flashes = 0;
+function simulateSteps(lines: string[], stepsMax = Infinity) {
+  const { grid, w, h } = createOctopusState(lines);
 
-  while (steps--) {
+  let stepCount = 0;
+  let flashes = 0;
+  let synchronizedAtStep = -1;
+
+  while (stepCount < stepsMax && synchronizedAtStep === -1) {
+    stepCount++;
     step();
   }
 
-  return flashes;
+  return {
+    flashes,
+    synchronizedAtStep,
+  };
 
   function step() {
     // First, the energy level of each octopus increases by 1.
@@ -72,6 +95,11 @@ function simulateSteps(lines: string[], steps: number) {
     // (An octopus can only flash at most once per step.)
     const flashed = flashAllFull();
 
+    // Detect if all octopuses flashed at the same time
+    if (flashed.size === w * h) {
+      synchronizedAtStep = stepCount;
+    }
+
     flashes += flashed.size;
 
     // Finally, any octopus that flashed during this step has its energy level set to 0, as it used all of its energy to flash.
@@ -79,9 +107,9 @@ function simulateSteps(lines: string[], steps: number) {
   }
 
   function incAll() {
-    for (let y = 0; y < state.h; y++) {
-      for (let x = 0; x < state.w; x++) {
-        state.grid[y][x].energyLevel++;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        grid[y][x].energyLevel++;
       }
     }
   }
@@ -89,10 +117,10 @@ function simulateSteps(lines: string[], steps: number) {
   function flashAllFull() {
     const flashed = new Set<Octopus>();
 
-    for (let y = 0; y < state.h; y++) {
-      for (let x = 0; x < state.w; x++) {
-        if (state.grid[y][x].energyLevel >= 10) {
-          flash(state.grid[y][x]);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (grid[y][x].energyLevel >= 10) {
+          flash(grid[y][x]);
         }
       }
     }
@@ -109,7 +137,7 @@ function simulateSteps(lines: string[], steps: number) {
       // Increase energy of octopuses in all directions
       for (let y = -1; y <= 1; y++) {
         for (let x = -1; x <= 1; x++) {
-          const oAround = state.grid[o.y + y]?.[o.x + x];
+          const oAround = grid[o.y + y]?.[o.x + x];
 
           if (oAround) {
             oAround.energyLevel++;
