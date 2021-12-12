@@ -17,3 +17,10 @@ export function readExampleIntoLines(exampleStr: string) {
     .map((l) => l.trim())
     .filter(Boolean);
 }
+
+export function readExampleIntoGroups(exampleStr: string) {
+  return exampleStr
+    .split(/\n\s*\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
