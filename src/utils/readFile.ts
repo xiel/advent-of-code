@@ -9,3 +9,11 @@ export function readFileIntoGroups(path: string) {
 export function readFileIntoLines(path: string) {
   return readFileSync(path, "utf-8").split("\n").filter(Boolean);
 }
+
+// one entry per line in input file (white spaces are trimmed and empty lines are removed & )
+export function readExampleIntoLines(exampleStr: string) {
+  return exampleStr
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
