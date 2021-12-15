@@ -19,12 +19,12 @@ describe("Day XX", () => {
   test("Part 01 - ...", async () => {
     expect(solve(example)).toBe(40);
 
-    console.log("INPUT");
+    console.log("INPut");
 
-    // const maxRisk = solve(input);
-    // expect(maxRisk).toBeLessThan(538);
-    // expect(maxRisk).toBeGreaterThan(530);
-    // expect(maxRisk).toBe(-1);
+    const maxRisk = solve(input);
+    expect(maxRisk).toBeLessThan(538);
+    expect(maxRisk).toBeGreaterThan(530);
+    expect(maxRisk).toBe(-1);
   });
 
   test("Part 02 - ..", () => {
@@ -166,7 +166,7 @@ function solve(lines: string[]) {
       activeDistances.reduce((a, b) => a + b, 0) / activeDistances.length
     );
 
-    const PATH_ALIVE = finishedPaths.length ? 6 : 2; // width, 100 ? !finishedPaths.length ? 5 : 10
+    const PATH_ALIVE = 5; // width, 100 ? !finishedPaths.length ? 5 : 10
 
     // correct example sequence:
     // [1] 1 2 1  3 6 5  1 1 1  5  1 1  3 2  3 2  1 1
@@ -188,7 +188,7 @@ function solve(lines: string[]) {
       }
 
       // This path must not be considered anymore
-      if (path.risk > bestRiskInFinished) {
+      if (path.risk >= bestRiskInFinished) {
         return false;
       }
 
@@ -212,7 +212,7 @@ function solve(lines: string[]) {
       activePaths = activePaths.concat(reactivatedPaths);
     }
 
-    if (i % 1000 === 0) {
+    if (i % 10000 === 0) {
       console.log({
         i,
         width,
