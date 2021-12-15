@@ -1,6 +1,6 @@
 import { readExampleIntoLines, readFileIntoLines } from "../../utils/readFile";
 
-describe("Day XX", () => {
+describe("Day 15: Chiton", () => {
   const example = readExampleIntoLines(`
     1163751742
     1381373672
@@ -16,116 +16,156 @@ describe("Day XX", () => {
 
   const input = readFileIntoLines(__dirname + "/input.txt");
 
-  test("Part 01 - ...", async () => {
+  test("Part 01 - What is the lowest total risk of any path from the top left to the bottom right?", async () => {
     expect(solve(example)).toBe(40);
-
-    console.log("INPut");
-
-    const maxRisk = solve(input);
-    expect(maxRisk).toBeLessThan(538);
-    expect(maxRisk).toBeGreaterThan(530);
-    expect(maxRisk).toBe(-1);
+    expect(solve(input)).toBe(537);
   });
 
-  test("Part 02 - ..", () => {
-    // ...
+  test("Part 02 - Five times larger in both dimensions & increased costs!", () => {
+    expect(solve(example)).toBe(40);
+    expect(solve(input)).toBe(537);
   });
 });
 
-const { min, max, abs } = Math;
-
-async function solveAgain2(lines: string[]) {
-  const grid = lines.map((l) => l.split("").map((s) => +s));
-
-  const width = grid[0].length;
-  const height = grid.length;
-
-  console.log(`grid`, grid);
-
-  const targetX = width - 1;
-  const targetY = height - 1;
-
-  const mem = new Map<string, number>();
-
-  return (await resolve(0, 0)) - grid[0][0];
-
-  async function resolve(x: number, y: number): Promise<number> {
-    const xyKey = `${x},${y}`;
-    if (mem.has(xyKey)) {
-      return mem.get(xyKey)!;
-    }
-    if (x < 0 || x >= width || y < 0 || y >= height) {
-      return Infinity;
-    }
-    if (x == targetX && y == targetY) {
-      return grid[y][x];
-    }
-
-    const result: number =
-      grid[y][x] +
-      min(
-        await resolve(x, y + 1),
-        await resolve(x + 1, y)
-        // await resolve(x - 1, y),
-        // await resolve(x, y - 1)
-      );
-
-    mem.set(xyKey, result);
-
-    return result;
-  }
-}
-
-function solveAgain(lines: string[]) {
-  const grid = lines.map((l) => l.split("").map((s) => +s));
-
-  const riskGrid = lines.map((l) =>
-    l
-      .split("")
-      .map((s) => +s)
-      .fill(Infinity)
-  );
-
-  const width = grid[0].length;
-  const height = grid.length;
-
-  const targetX = width - 1;
-  const targetY = height - 1;
-
-  for (let y = targetY; y >= 0; y--) {
-    for (let x = targetX; x >= 0; x--) {
-      const ownRisk = grid[y][x];
-      const rightRisk = riskGrid[y]?.[x + 1];
-      const bottomRisk = riskGrid[y + 1]?.[x];
-
-      // target pos
-      if (rightRisk === undefined && bottomRisk === undefined) {
-        riskGrid[y][x] = ownRisk;
-      } else if (bottomRisk === undefined) {
-        riskGrid[y][x] = ownRisk + rightRisk;
-      } else if (rightRisk === undefined) {
-        riskGrid[y][x] = ownRisk + bottomRisk;
-      } else {
-        riskGrid[y][x] = ownRisk + Math.min(rightRisk, bottomRisk);
-      }
-    }
-  }
-
-  console.log(`riskGrid`, riskGrid);
-
-  return riskGrid[0][0] - 1;
-}
-
-interface Path {
+interface Node {
+  key: string;
   x: number;
   y: number;
-  entered: number[];
-  risk: number;
-  hadBeenAt: Set<string>;
-  distance: number;
+  localCost: number;
+  pathVia?: Node; // node key
+  riskCost: number; // "distance" from start aka. tells how much does it costs to get here from start
 }
 
-function solve(lines: string[]) {
+// Implemented Dijkstra's Algorithm
+function solve(lines: string[], fiveTimesLargerMap = false) {
+  const grid = lines.map((l) => l.split("").map((s) => +s));
+
+  const width = grid[0].length;
+  const height = grid.length;
+
+  const targetX = width - 1;
+  const targetY = height - 1;
+
+  const prioList: Node[] = [];
+  const nodesMap = new Map<string, Node>();
+  const doneNodes = new Set<Node>();
+
+  const startNode = createNode({ x: 0, y: 0, riskCost: 0 });
+
+  nodesMap.set(startNode.key, startNode);
+  prioList.push(startNode);
+
+  console.log(`startNode`, startNode);
+
+  let i = 0;
+  while (prioList.length) {
+    i++;
+
+    // TODO: find better way instead of sorting again and again, eg. update when inserting/updating nodes
+    // instead search for node with lowest (n), no full sort needed
+    const currentNode = prioList
+      .sort((a, b) => a.riskCost - b.riskCost)
+      .shift()!;
+
+    if (i % 1000 === 0) {
+      console.log({
+        i,
+        prioL: prioList.length,
+        done: doneNodes.size,
+        all: nodesMap.size,
+        currentNode,
+      });
+    }
+
+    if (currentNode.riskCost === Infinity) {
+      break;
+    }
+    if (doneNodes.has(currentNode)) {
+      continue;
+    }
+
+    const { x, y } = currentNode;
+
+    // Add all direct neighbors to prio list if they are not in it yet
+    // If the node is inserted, the via is set to current node
+    // riskCost is updated if smaller
+    updateNeighbor(currentNode, x + 1, y); // right
+    updateNeighbor(currentNode, x, y + 1); // bottom
+    updateNeighbor(currentNode, x, y - 1); // top
+    updateNeighbor(currentNode, x - 1, y); // left
+
+    // currentNode is added to done list
+    doneNodes.add(currentNode);
+  }
+
+  const targetNode = nodesMap.get(getKey(targetX, targetY))!;
+
+  const localCostsToTarget: number[] = [];
+  let backTrackingNode = targetNode;
+
+  while (backTrackingNode.pathVia) {
+    localCostsToTarget.push(backTrackingNode.localCost);
+    backTrackingNode = backTrackingNode.pathVia;
+  }
+
+  console.log(`targetNode`, targetNode);
+  console.log(`localCostsToTarget`, localCostsToTarget);
+
+  return targetNode.riskCost;
+
+  function updateNeighbor(fromNode: Node, x: number, y: number) {
+    const neighborKey = getKey(x, y);
+    let neighborNode = nodesMap.get(neighborKey);
+
+    if (!neighborNode) {
+      neighborNode = createNode({
+        x,
+        y,
+      });
+      nodesMap.set(neighborKey, neighborNode);
+      prioList.push(neighborNode);
+    }
+
+    const possibleRiskCost = fromNode.riskCost + neighborNode.localCost;
+
+    if (possibleRiskCost < neighborNode.riskCost) {
+      neighborNode.pathVia = fromNode;
+      neighborNode.riskCost = possibleRiskCost;
+    }
+  }
+
+  function createNode({
+    x,
+    y,
+    pathVia,
+    riskCost = Infinity,
+  }: Omit<Node, "key" | "localCost" | "riskCost"> & {
+    riskCost?: number;
+  }): Node {
+    return {
+      key: getKey(x, y),
+      x,
+      y,
+      riskCost,
+      pathVia,
+      localCost: grid[y]?.[x] ?? Infinity,
+    };
+  }
+
+  function getKey(x: number, y: number) {
+    return [x, y].join();
+  }
+}
+
+function solveFreeStyle(lines: string[]) {
+  interface Path {
+    x: number;
+    y: number;
+    entered: number[];
+    risk: number;
+    hadBeenAt: Set<string>;
+    distance: number;
+  }
   const grid = lines.map((l) => l.split("").map((s) => +s));
 
   const width = grid[0].length;
@@ -153,12 +193,24 @@ function solve(lines: string[]) {
 
     activePaths = activePaths.flatMap((path) => {
       const { x, y } = path;
-      return [
+      const newPaths = [
         pathEnters(path, x + 1, y), // right
         pathEnters(path, x, y + 1), // bottom
         pathEnters(path, x, y - 1), // top
         pathEnters(path, x - 1, y), // left
-      ];
+      ].filter((path) => {
+        return path.risk < bestRiskInFinished;
+      });
+
+      if (!newPaths.length) {
+        return [];
+      }
+
+      const [best, ...rest] = newPaths.sort((a, b) => a.risk - b.risk);
+
+      pausedPaths.push(...rest);
+
+      return [best];
     });
 
     const activeDistances = activePaths.map((p) => p.distance);
@@ -166,7 +218,7 @@ function solve(lines: string[]) {
       activeDistances.reduce((a, b) => a + b, 0) / activeDistances.length
     );
 
-    const PATH_ALIVE = 5; // width, 100 ? !finishedPaths.length ? 5 : 10
+    const PATH_ALIVE = 10; // width, 100 ? !finishedPaths.length ? 5 : 10
 
     // correct example sequence:
     // [1] 1 2 1  3 6 5  1 1 1  5  1 1  3 2  3 2  1 1
