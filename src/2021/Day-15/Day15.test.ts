@@ -22,8 +22,8 @@ describe("Day 15: Chiton", () => {
   });
 
   test("Part 02 - Five times larger in both dimensions & increased costs!", () => {
-    expect(solve(example)).toBe(40);
-    expect(solve(input)).toBe(537);
+    expect(solve(example, true)).toBe(315);
+    expect(solve(input, true)).toBe(2881);
   });
 });
 
@@ -36,12 +36,29 @@ interface Node {
   riskCost: number; // "distance" from start aka. tells how much does it costs to get here from start
 }
 
+const { min, max, abs, floor } = Math;
+
 // Implemented Dijkstra's Algorithm
 function solve(lines: string[], fiveTimesLargerMap = false) {
-  const grid = lines.map((l) => l.split("").map((s) => +s));
+  let grid = lines.map((l) => l.split("").map((s) => +s));
 
-  const width = grid[0].length;
-  const height = grid.length;
+  const orgWidth = grid[0].length;
+  const orgHeight = grid.length;
+
+  let width = grid[0].length;
+  let height = grid.length;
+
+  if (fiveTimesLargerMap) {
+    grid = Array.from({ length: height * 5 }, (_, gridY) =>
+      Array.from({ length: width * 5 }, (_, gridX) => {
+        const orgValue = grid[gridY % height][gridX % width];
+
+        return orgValue;
+      })
+    );
+    width = width * 5;
+    height = height * 5;
+  }
 
   const targetX = width - 1;
   const targetY = height - 1;
@@ -51,31 +68,15 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
   const doneNodes = new Set<Node>();
 
   const startNode = createNode({ x: 0, y: 0, riskCost: 0 });
-
   nodesMap.set(startNode.key, startNode);
   prioList.push(startNode);
 
-  console.log(`startNode`, startNode);
-
-  let i = 0;
   while (prioList.length) {
-    i++;
-
     // TODO: find better way instead of sorting again and again, eg. update when inserting/updating nodes
     // instead search for node with lowest (n), no full sort needed
     const currentNode = prioList
       .sort((a, b) => a.riskCost - b.riskCost)
       .shift()!;
-
-    if (i % 1000 === 0) {
-      console.log({
-        i,
-        prioL: prioList.length,
-        done: doneNodes.size,
-        all: nodesMap.size,
-        currentNode,
-      });
-    }
 
     if (currentNode.riskCost === Infinity) {
       break;
@@ -142,13 +143,21 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
   }: Omit<Node, "key" | "localCost" | "riskCost"> & {
     riskCost?: number;
   }): Node {
+    const xRepeat = floor(x / orgWidth);
+    const yRepeat = floor(y / orgHeight);
+    let localCost = (grid[y]?.[x] ?? Infinity) + xRepeat + yRepeat;
+
+    if (localCost > 9) {
+      localCost -= 9;
+    }
+
     return {
       key: getKey(x, y),
       x,
       y,
       riskCost,
       pathVia,
-      localCost: grid[y]?.[x] ?? Infinity,
+      localCost,
     };
   }
 
