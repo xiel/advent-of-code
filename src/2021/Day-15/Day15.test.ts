@@ -76,7 +76,11 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
   const doneNodes = new Set<Node>();
 
   const startNode = createNode({ x: 0, y: 0, riskCost: 0 });
+  const targetNode = createNode({ x: targetX, y: targetY });
+
   nodesMap.set(startNode.key, startNode);
+  nodesMap.set(targetNode.key, targetNode);
+
   prioList.push(startNode);
 
   while (prioList.length) {
@@ -87,6 +91,9 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
       .shift()!;
 
     if (currentNode.riskCost === Infinity) {
+      break;
+    }
+    if (currentNode === targetNode) {
       break;
     }
     if (doneNodes.has(currentNode)) {
@@ -107,7 +114,7 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
     doneNodes.add(currentNode);
   }
 
-  return nodesMap.get(getKey(targetX, targetY))!.riskCost;
+  return targetNode.riskCost;
 
   function updateNeighbor(fromNode: Node, x: number, y: number) {
     const neighborKey = getKey(x, y);
