@@ -3,6 +3,7 @@ node_modules
 .cache
 dist
 report.*.json
+/build/config.gypi
 
 # yarn
 .pnp.*

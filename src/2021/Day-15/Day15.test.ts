@@ -1,6 +1,11 @@
+import { createCanvas } from "canvas";
 import { readExampleIntoLines, readFileIntoLines } from "../../utils/readFile";
+import * as fs from "fs";
 
 describe("Day 15: Chiton", () => {
+  // Drawing the images is kinda slow
+  jest.setTimeout(30_000);
+
   const example = readExampleIntoLines(`
     1163751742
     1381373672
@@ -17,13 +22,13 @@ describe("Day 15: Chiton", () => {
   const input = readFileIntoLines(__dirname + "/input.txt");
 
   test("Part 01 - What is the lowest total risk of any path from the top left to the bottom right?", async () => {
-    expect(solve(example)).toBe(40);
-    expect(solve(input)).toBe(537);
+    expect(await solve(example)).toBe(40);
+    expect(await solve(input)).toBe(537);
   });
 
-  test("Part 02 - Five times larger in both dimensions & increased costs!", () => {
-    expect(solve(example, true)).toBe(315);
-    expect(solve(input, true)).toBe(2881);
+  test("Part 02 - Five times larger in both dimensions & increased costs!", async () => {
+    expect(await solve(example, true)).toBe(315);
+    expect(await solve(input, true)).toBe(2881);
   });
 });
 
@@ -39,7 +44,7 @@ interface Node {
 const { floor } = Math;
 
 // Implemented Dijkstra's Algorithm
-function solve(lines: string[], fiveTimesLargerMap = false) {
+async function solve(lines: string[], fiveTimesLargerMap = false) {
   let grid = lines.map((l) => l.split("").map((s) => +s));
 
   const orgWidth = grid[0].length;
@@ -114,9 +119,14 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
     doneNodes.add(currentNode);
   }
 
+  // Draw map at the very end
+  await drawMap();
+
   return targetNode.riskCost;
 
   function updateNeighbor(fromNode: Node, x: number, y: number) {
+    if (x < 0 || x >= width || y < 0 || y > height) return;
+
     const neighborKey = getKey(x, y);
     let neighborNode = nodesMap.get(neighborKey);
 
@@ -157,5 +167,55 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
 
   function getKey(x: number, y: number) {
     return [x, y].join();
+  }
+
+  async function drawMap() {
+    const canvas = createCanvas(width, height);
+    const context = canvas.getContext("2d");
+
+    context.fillStyle = "#12f";
+    context.fillRect(0, 0, width, height);
+
+    const nodesToDraw = [...nodesMap.values()].filter(
+      (n) => n.riskCost < Infinity
+    );
+
+    const max = nodesToDraw
+      .map((n) => n.riskCost)
+      .reduce((a, b) => Math.max(a, b), 0);
+
+    nodesToDraw.forEach((node) => {
+      const riskColor = Math.round((node.riskCost / max) * 255)
+        .toString(16)
+        .padStart(2, "0");
+      context.fillStyle = `#${riskColor}196c`;
+      context.fillRect(node.x, node.y, 1, 1);
+    });
+
+    let backtrackCheapest = targetNode;
+
+    while (backtrackCheapest.pathVia) {
+      context.fillStyle = `#ffffff`;
+      context.fillRect(backtrackCheapest.x, backtrackCheapest.y, 1, 1);
+      backtrackCheapest = backtrackCheapest.pathVia;
+    }
+    context.fillRect(startNode.x, startNode.y, 1, 1);
+
+    context.font = "bold 70pt Menlo";
+    context.font = `bold ${height / 50}pt Menlo`;
+    context.textAlign = "right";
+    context.textBaseline = "top";
+
+    context.fillStyle = "#fff";
+    context.fillText("AoC 2021", width, 0);
+
+    context.fillStyle = "#fff";
+    context.fillText("@xiel", width, height / 40);
+
+    const buffer = canvas.toBuffer("image/png");
+
+    return new Promise((resolve) => {
+      fs.writeFile(`${__dirname}/${width}x${height}.png`, buffer, resolve);
+    });
   }
 }
