@@ -68,6 +68,9 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
     height = height * 5;
   }
 
+  console.log(`width`, width);
+  console.log(`height`, height);
+
   const targetX = width - 1;
   const targetY = height - 1;
 
@@ -114,6 +117,10 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
     doneNodes.add(currentNode);
   }
 
+  setTimeout(() => {
+    drawMap();
+  });
+
   return targetNode.riskCost;
 
   function updateNeighbor(fromNode: Node, x: number, y: number) {
@@ -157,5 +164,9 @@ function solve(lines: string[], fiveTimesLargerMap = false) {
 
   function getKey(x: number, y: number) {
     return [x, y].join();
+  }
+
+  function drawMap() {
+    // ...!
   }
 }
