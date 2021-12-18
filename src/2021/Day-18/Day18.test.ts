@@ -67,8 +67,6 @@ function isSnailNumber(n: Num | SnailNumber): n is SnailNumber {
 }
 
 function sumSnailNumbers(lines: string[]): SnailNumber {
-  console.log("...,,..-.-.-.-.-,-.,-,.-,.-,-.,-.,-.");
-  console.log(lines);
   const snailNumbers: SnailNumber[] = lines.map((l) => json(l));
   let sum = snailNumbers.shift()!;
 
@@ -76,18 +74,11 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
     // add - or example, [1,2] + [[3,4],5] becomes [[1,2],[[3,4],5]].
     const adding = snailNumbers.shift()!;
 
-    console.log("---------------------------------");
-    console.log(`before`, JSON.stringify(sum));
-    console.log(`adding`, JSON.stringify(adding));
-
     sum = [sum, adding];
-    console.log(JSON.stringify(sum));
 
     // Reducing
+    // eslint-disable-next-line no-constant-condition
     reducing: while (true) {
-      console.log("reducing...");
-      console.log(JSON.stringify(sum));
-
       let lastSeenRegularIn: { sn: SnailNumber; at: number } | undefined;
       let updateNextRegularWith: number | undefined = undefined;
 
@@ -96,7 +87,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
       for (const [i1, e1] of sum.entries()) {
         if (!isSnailNumber(e1)) {
           if (updateNextRegularWith !== undefined) {
-            console.log("UPGRADING NEXT", updateNextRegularWith);
             sum[i1] = +sum[i1] + updateNextRegularWith;
             continue reducing;
           }
@@ -106,7 +96,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
         for (const [i2, e2] of e1.entries()) {
           if (!isSnailNumber(e2)) {
             if (updateNextRegularWith !== undefined) {
-              console.log("UPGRADING NEXT", updateNextRegularWith);
               e1[i2] = +e1[i2] + updateNextRegularWith;
               continue reducing;
             }
@@ -116,7 +105,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
           for (const [i3, e3] of e2.entries()) {
             if (!isSnailNumber(e3)) {
               if (updateNextRegularWith !== undefined) {
-                console.log("UPGRADING NEXT", updateNextRegularWith);
                 e2[i3] = +e2[i3] + updateNextRegularWith;
                 continue reducing;
               }
@@ -125,7 +113,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
             }
             for (const [i4, e4] of e3.entries()) {
               if (updateNextRegularWith !== undefined) {
-                console.log(`updateNextRegularWith`, updateNextRegularWith);
                 if (isSnailNumber(e4)) {
                   for (const [i5, e5] of e4.entries()) {
                     if (isSnailNumber(e5))
@@ -149,15 +136,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
                 //  Exploding pairs will always consist of two regular numbers.
                 if (isSnailNumber(left) || isSnailNumber(right))
                   throw Error("Must be a regular number.");
-
-                console.log("exploding...", {
-                  el: e4,
-                  in: e3,
-                  lastSeenRegularIn,
-                  at: i4,
-                  in: JSON.stringify(sum),
-                });
-                // console.log(`lastSeenRegularIn`, lastSeenRegularIn);
 
                 //  To explode a pair, the pair's left value is added to the first regular number to the left of the exploding pair (if any),
                 if (lastSeenRegularIn) {
@@ -206,14 +184,11 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
     }
   }
 
-  console.log("end", JSON.stringify(sum));
-
   return sum;
 
   function splitIfNeeded(sn: SnailNumber, at: number): boolean {
     const element = sn[at];
     if (typeof element === "number" && element >= 10) {
-      console.log("splitting", { element, sn, at, in: JSON.stringify(sum) });
       const half = element / 2;
       sn[at] = [floor(half), ceil(half)];
       return true;
