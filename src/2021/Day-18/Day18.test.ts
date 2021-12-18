@@ -1,6 +1,6 @@
 import { readExampleIntoLines, readFileIntoLines } from "../../utils/readFile";
 
-const { floor, ceil } = Math;
+const { floor, ceil, max } = Math;
 const json = JSON.parse;
 
 describe("Day 18: Snailfish", () => {
@@ -55,8 +55,9 @@ describe("Day 18: Snailfish", () => {
     expect(magnitude(sumSnailNumbers(input))).toBe(4207);
   });
 
-  test("Part 02 - ..", () => {
-    // ...
+  test("Part 02 - What is the largest magnitude of any sum of two different snailfish numbers from the homework assignment?", () => {
+    expect(magnitude(findHighestMagnitude(exampleBig))).toBe(3993);
+    expect(magnitude(findHighestMagnitude(input))).toBe(4635);
   });
 });
 
@@ -128,7 +129,6 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
               if (!isSnailNumber(e4)) {
                 lastSeenRegularIn = { sn: e3, at: i4 };
               } else {
-                // TODO: iterate when updateNextRegularWith
                 if (e4.length !== 2) throw Error("must be length 2.");
 
                 const [left, right] = e4;
@@ -171,7 +171,7 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
           for (const [i3, e3] of e2.entries()) {
             if (splitIfNeeded(e2, i3)) continue reducing;
             if (!isSnailNumber(e3)) continue;
-            for (const [i4, e4] of e3.entries()) {
+            for (const [i4] of e3.entries()) {
               if (splitIfNeeded(e3, i4)) continue reducing;
               if (!isSnailNumber(e3)) continue;
             }
@@ -179,7 +179,7 @@ function sumSnailNumbers(lines: string[]): SnailNumber {
         }
       }
 
-      // Stop when nothing happened (continue called)
+      // Stop when nothing happened (continue must be called)
       break reducing;
     }
   }
@@ -203,4 +203,20 @@ function magnitude(num: SnailNumber | number): number {
   const [left, right] = num;
   // The magnitude of a pair is 3 times the magnitude of its left element plus 2 times the magnitude of its right element.
   return magnitude(left) * 3 + magnitude(right) * 2;
+}
+
+// Part 2
+function findHighestMagnitude(lines: string[]) {
+  let highest = -Infinity;
+  for (let i = 0; i < lines.length; i++) {
+    const thisLine = lines[i];
+    for (let otherI = 0; otherI < lines.length; otherI++) {
+      if (otherI === i) continue;
+      highest = max(
+        highest,
+        magnitude(sumSnailNumbers([thisLine, lines[otherI]]))
+      );
+    }
+  }
+  return highest;
 }
