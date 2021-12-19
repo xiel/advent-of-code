@@ -4,6 +4,7 @@ node_modules
 dist
 report.*.json
 /build/config.gypi
+/coverage/
 
 # yarn
 .pnp.*

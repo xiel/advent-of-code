@@ -18,35 +18,38 @@ describe("Day 19", () => {
   );
   const input = readFileIntoGroups(__dirname + "/input.txt");
 
-  test("Part 01 - ...", () => {
-    expect(solve(oneScanner)); //.toBe(-1);
+  test("Part 1 & 2", () => {
+    expect(solve(oneScanner));
     expect(solve(example).beacons.length).toBe(exampleResolution.length);
-    // expect(solve(input).beacons.length).toBe(-1);
-  });
+    expect(solve(example).largestScannerDistance).toBe(3621);
 
-  test.skip("Part 02 - ..", () => {
-    // ...
+    const result = solve(input);
+    // Part 1 - How many beacons are there?
+    expect(result.beacons.length).toBe(483);
+    // Part 2 - What is the largest Manhattan distance between any two scanners?
+    expect(result.largestScannerDistance).toBe(14804);
   });
 });
+
+type XYZ = [number, number, number];
+
+const { stringify } = JSON;
+const { max, abs } = Math;
 
 // Each scanner is capable of detecting all beacons in a large cube centered on the scanner;
 // beacons that are at most 1000 units away from the scanner in each of the three axes (x, y, and z) have their precise position determined relative to the scanner.
 // However, scanners cannot detect other scanners. The submarine has automatically summarized the relative positions of beacons detected by each scanner (your puzzle input)
-
-type XYZ = [number, number, number];
-const { stringify } = JSON;
-const { abs, pow } = Math;
-
 function solve(lines: string[]) {
   const scanners = lines.map(createScanner);
-  // This region can be reconstructed by finding pairs of scanners that have overlapping detection regions
-  // Allowing you to reconstruct the beacon map one scanner at a time.
+
   scanners[0]!.x = 0;
   scanners[0]!.y = 0;
   scanners[0]!.z = 0;
 
   const scannerZeroBeacons = scanners[0].beacons;
-  let validDiffSets = getDiffs(scannerZeroBeacons, scanners[0]); // TODO: concat to this
+  let validDiffSets = getDiffs(scannerZeroBeacons, scanners[0]);
+
+  const diffsCache = new Map<XYZ[], ReturnType<typeof getDiffs>>();
 
   const otherScanners = scanners.slice(1);
   const mapBeacons = new Map<string, XYZ>();
@@ -58,17 +61,17 @@ function solve(lines: string[]) {
   while (otherScanners.length) {
     const currentScanner = otherScanners.shift()!;
 
-    // ... that there are AT LEAST 12 BEACONS that both scanners detect within the overlap.
-    const permutationForScanner = currentScanner.permutations.filter(
-      (beaconPositionsInPermutation, i) => {
-        // 3 is it for 1
-        console.log("scanner", currentScanner, i);
-
+    const permutationForScanner = currentScanner.permutations.find(
+      (beaconPositionsInPermutation) => {
         // Calc diff from every point to every point in permutation
-        const diffsInPermutation = getDiffs(
-          beaconPositionsInPermutation,
-          currentScanner
-        );
+        const diffsInPermutation = (() => {
+          if (diffsCache.has(beaconPositionsInPermutation)) {
+            return diffsCache.get(beaconPositionsInPermutation)!;
+          }
+          const dip = getDiffs(beaconPositionsInPermutation, currentScanner);
+          diffsCache.set(beaconPositionsInPermutation, dip);
+          return dip;
+        })();
 
         // Find a point/origin that reaches at least 11 points (with itself they are 12 points) with the same diffs as the verified beacons
         let scannerPos: XYZ | undefined = undefined;
@@ -85,17 +88,12 @@ function solve(lines: string[]) {
                     diffSet.scanner.y! + diffSet.from[1] - diffCurrent.from[1],
                     diffSet.scanner.z! + diffSet.from[2] - diffCurrent.from[2],
                   ];
-                  console.log(newScannerPos);
                 }
 
                 return matches;
               })
             );
-            // TODO: omg valid diffs could be merged into a big one that includes all already valid, in case one only a few from one scanner and more from another
 
-            if (matchingDiffs.length) {
-              console.log(`matchingDiffs`, matchingDiffs);
-            }
             if (matchingDiffs.length >= 11) {
               scannerPos = newScannerPos;
             }
@@ -110,6 +108,19 @@ function solve(lines: string[]) {
           currentScanner.y = y;
           currentScanner.z = z;
 
+          // Calc position of beacons from neutral position (scanner 0) and add them
+          beaconPositionsInPermutation.forEach(
+            ([xBeacon, yBeacon, zBeacon]) => {
+              const beaconNeutral: XYZ = [
+                currentScanner.x! + xBeacon,
+                currentScanner.y! + yBeacon,
+                currentScanner.z! + zBeacon,
+              ];
+
+              mapBeacons.set(stringify(beaconNeutral), beaconNeutral);
+            }
+          );
+
           // Add diffs from this permutation to valid diff sets
           validDiffSets = validDiffSets.concat(diffsInPermutation);
 
@@ -119,18 +130,37 @@ function solve(lines: string[]) {
       }
     );
 
-    if (permutationForScanner.length > 1) {
-      throw Error("error");
-    }
-    if (permutationForScanner.length) {
-      // console.log("heureka!", permutationForScanner);
-    } else {
-      // if not matched add back into cue
+    // if not matched add back into cue
+    if (!permutationForScanner) {
       otherScanners.push(currentScanner);
     }
   }
 
-  return { scanners, beacons: [...mapBeacons.values()] };
+  const largestScannerDistance = getLargestScannerDistance();
+
+  return {
+    scanners,
+    largestScannerDistance,
+    beacons: [...mapBeacons.values()],
+  };
+
+  // Part 2
+  function getLargestScannerDistance() {
+    let maxManhattan = -Infinity;
+    for (const scanner of scanners) {
+      for (const scanner2 of scanners) {
+        maxManhattan = max(
+          maxManhattan,
+          [
+            abs(scanner.x! - scanner2.x!),
+            abs(scanner.y! - scanner2.y!),
+            abs(scanner.z! - scanner2.z!),
+          ].reduce((a, b) => a + b, 0)
+        );
+      }
+    }
+    return maxManhattan;
+  }
 
   function createScanner(des: string) {
     const [name, ...beaconsStr] = des
