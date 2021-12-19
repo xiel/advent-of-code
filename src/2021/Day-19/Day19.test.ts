@@ -21,7 +21,7 @@ describe("Day 19", () => {
   test("Part 01 - ...", () => {
     expect(solve(oneScanner)); //.toBe(-1);
     expect(solve(example).beacons.length).toBe(exampleResolution.length);
-    expect(solve(input).beacons.length).toBe(-1);
+    // expect(solve(input).beacons.length).toBe(-1);
   });
 
   test.skip("Part 02 - ..", () => {
@@ -43,9 +43,10 @@ function solve(lines: string[]) {
   // Allowing you to reconstruct the beacon map one scanner at a time.
   scanners[0]!.x = 0;
   scanners[0]!.y = 0;
+  scanners[0]!.z = 0;
 
   const scannerZeroBeacons = scanners[0].beacons;
-  const verifiedDiffs = [getDiffs(scannerZeroBeacons)];
+  let validDiffSets = getDiffs(scannerZeroBeacons, scanners[0]); // TODO: concat to this
 
   const otherScanners = scanners.slice(1);
   const mapBeacons = new Map<string, XYZ>();
@@ -55,42 +56,64 @@ function solve(lines: string[]) {
   });
 
   while (otherScanners.length) {
-    const scanner = otherScanners.shift()!;
+    const currentScanner = otherScanners.shift()!;
 
     // ... that there are AT LEAST 12 BEACONS that both scanners detect within the overlap.
-    const permutationForScanner = scanner.permutations.filter(
+    const permutationForScanner = currentScanner.permutations.filter(
       (beaconPositionsInPermutation, i) => {
-        const matchedBeaconsInPerm = new Map<string, XYZ>();
-        const diffsInPermutation = getDiffs(beaconPositionsInPermutation);
+        // 3 is it for 1
+        console.log("scanner", currentScanner, i);
 
-        const minNumRequired = (12 * (12 - 1)) / 2;
-        const verifiedDiffsFlat = verifiedDiffs.flatMap((d) => d);
-        const matchedDiffs = diffsInPermutation.filter((diffInPerm) => {
-          return !!verifiedDiffsFlat.find((verifiedDiffInfo) => {
-            return diffInPerm.diffStr === verifiedDiffInfo.diffStr;
+        // Calc diff from every point to every point in permutation
+        const diffsInPermutation = getDiffs(
+          beaconPositionsInPermutation,
+          currentScanner
+        );
+
+        // Find a point/origin that reaches at least 11 points (with itself they are 12 points) with the same diffs as the verified beacons
+        let scannerPos: XYZ | undefined = undefined;
+        const permutationMatches = validDiffSets.find((validDiffSet) => {
+          return diffsInPermutation.find((diffsFrom) => {
+            let newScannerPos: XYZ | undefined = undefined;
+            const matchingDiffs = diffsFrom.filter((diffCurrent) =>
+              validDiffSet.find((diffSet) => {
+                const matches = diffSet.diffStr === diffCurrent.diffStr;
+
+                if (matches && diffSet.scanner.x !== undefined) {
+                  newScannerPos = [
+                    diffSet.scanner.x! + diffSet.from[0] - diffCurrent.from[0],
+                    diffSet.scanner.y! + diffSet.from[1] - diffCurrent.from[1],
+                    diffSet.scanner.z! + diffSet.from[2] - diffCurrent.from[2],
+                  ];
+                  console.log(newScannerPos);
+                }
+
+                return matches;
+              })
+            );
+            // TODO: omg valid diffs could be merged into a big one that includes all already valid, in case one only a few from one scanner and more from another
+
+            if (matchingDiffs.length) {
+              console.log(`matchingDiffs`, matchingDiffs);
+            }
+            if (matchingDiffs.length >= 11) {
+              scannerPos = newScannerPos;
+            }
+            return matchingDiffs.length >= 11;
           });
         });
 
-        // This is the correct permutation stop checking
-        // Now this scanner's beacons can also be used as valid orientation
-        if (matchedDiffs.length >= minNumRequired) {
-          // todo: calc position of scanner, then points can be easier added
+        if (permutationMatches) {
+          // Update Scanner position now
+          const [x, y, z] = scannerPos!;
+          currentScanner.x = x;
+          currentScanner.y = y;
+          currentScanner.z = z;
 
-          console.log(`matchedDiffs`, matchedDiffs);
-          console.log("found something");
-          // x TODO no not add the matched ones again with different coords
-          // All other beacons in this permutation/rotation must be valid too and can also be added
-          beaconPositionsInPermutation.forEach((xyz) => {
-            const key = stringify(xyz);
-            if (matchedBeaconsInPerm.has(key)) {
-              console.log("this is the original matched point");
-              return;
-            }
-            mapBeacons.set(stringify(xyz), xyz);
-          });
+          // Add diffs from this permutation to valid diff sets
+          validDiffSets = validDiffSets.concat(diffsInPermutation);
 
-          verifiedDiffs.push(diffsInPermutation);
-          // Do not interate over other permutations in this scanner
+          // Do not iterate over other permutations in this scanner
           return true;
         }
       }
@@ -99,12 +122,11 @@ function solve(lines: string[]) {
     if (permutationForScanner.length > 1) {
       throw Error("error");
     }
-
-    // if not matched add back into cue
     if (permutationForScanner.length) {
-      console.log("heureka!", permutationForScanner);
+      // console.log("heureka!", permutationForScanner);
     } else {
-      otherScanners.push(scanner);
+      // if not matched add back into cue
+      otherScanners.push(currentScanner);
     }
   }
 
@@ -165,37 +187,45 @@ function solve(lines: string[]) {
       beacons,
       x: undefined as number | undefined,
       y: undefined as number | undefined,
+      z: undefined as number | undefined,
       beaconsCount: beacons.length,
       permutations,
     };
   }
 
-  function calcDiff(a: XYZ, b: XYZ): XYZ {
-    const [xA, yA, zA] = a;
-    const [xB, yB, zB] = b;
-    return [abs(xA - xB), abs(yA - yB), abs(zA - zB)];
+  function calcDiff(from: XYZ, to: XYZ): XYZ {
+    const [xFrom, yFrom, zFrom] = from;
+    const [xTo, yTo, zTo] = to;
+    return [xTo - xFrom, yTo - yFrom, zTo - zFrom];
   }
 
-  type DiffInfo = { diff: XYZ; diffStr: string; points: [XYZ, XYZ] };
+  type Scanner = ReturnType<typeof createScanner>;
+  type DiffInfo = {
+    diff: XYZ;
+    from: XYZ;
+    to: XYZ;
+    diffStr: string;
+    scanner: Scanner;
+  };
 
-  function getDiffs(beacons: XYZ[]) {
-    const connectionAdded = new Set<string>();
-    const diffs: DiffInfo[] = [];
+  function getDiffs(beacons: XYZ[], scanner: Scanner) {
+    const diffs: DiffInfo[][] = [];
     for (let i = 0; i < beacons.length; i++) {
+      const from = beacons[i];
+      const fromHereDiffs: DiffInfo[] = [];
+      diffs.push(fromHereDiffs);
       for (let y = 0; y < beacons.length; y++) {
         if (i === y) continue;
-        const keys = [`${i}<->${y}`, `${y}<->${i}`];
-        if (keys.some((k) => connectionAdded.has(k))) continue;
-        keys.forEach((k) => connectionAdded.add(k));
 
-        const points: [XYZ, XYZ] = [beacons[i], beacons[y]];
-        const diff = calcDiff(...points);
+        const to = beacons[y];
+        const diff = calcDiff(from, to);
 
-        // TODO: diff str might need to encode start and end, keys could be sorted end prefixed
-        diffs.push({
-          points,
+        fromHereDiffs.push({
+          from,
+          to,
           diff,
           diffStr: stringify(diff),
+          scanner,
         });
       }
     }
