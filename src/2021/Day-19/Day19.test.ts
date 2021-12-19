@@ -35,7 +35,7 @@ describe("Day 19", () => {
 
 type XYZ = [number, number, number];
 const { stringify } = JSON;
-const { abs } = Math;
+const { abs, pow } = Math;
 
 function solve(lines: string[]) {
   const scanners = lines.map(createScanner);
@@ -58,28 +58,25 @@ function solve(lines: string[]) {
     const scanner = otherScanners.shift()!;
 
     // ... that there are AT LEAST 12 BEACONS that both scanners detect within the overlap.
-    const permutationForScanner = scanner.permutations.find(
+    const permutationForScanner = scanner.permutations.filter(
       (beaconPositionsInPermutation, i) => {
         const matchedBeaconsInPerm = new Map<string, XYZ>();
         const diffsInPermutation = getDiffs(beaconPositionsInPermutation);
 
-        diffsInPermutation.forEach((diff) => {
-          // TODO we can make look up faster by using a set
-          verifiedDiffs.find((verifiedDiff) =>
-            verifiedDiff.find((verifiedDiffInfo) => {
-              if (verifiedDiffInfo.diffStr === diff.diffStr) {
-                verifiedDiffInfo.points.forEach((p) => {
-                  matchedBeaconsInPerm.set(stringify(p), p);
-                });
-                return true;
-              }
-            })
-          );
+        const minNumRequired = (12 * (12 - 1)) / 2;
+        const verifiedDiffsFlat = verifiedDiffs.flatMap((d) => d);
+        const matchedDiffs = diffsInPermutation.filter((diffInPerm) => {
+          return !!verifiedDiffsFlat.find((verifiedDiffInfo) => {
+            return diffInPerm.diffStr === verifiedDiffInfo.diffStr;
+          });
         });
 
         // This is the correct permutation stop checking
         // Now this scanner's beacons can also be used as valid orientation
-        if (matchedBeaconsInPerm.size >= 12) {
+        if (matchedDiffs.length >= minNumRequired) {
+          // todo: calc position of scanner, then points can be easier added
+
+          console.log(`matchedDiffs`, matchedDiffs);
           console.log("found something");
           // x TODO no not add the matched ones again with different coords
           // All other beacons in this permutation/rotation must be valid too and can also be added
@@ -99,8 +96,12 @@ function solve(lines: string[]) {
       }
     );
 
+    if (permutationForScanner.length > 1) {
+      throw Error("error");
+    }
+
     // if not matched add back into cue
-    if (permutationForScanner) {
+    if (permutationForScanner.length) {
       console.log("heureka!", permutationForScanner);
     } else {
       otherScanners.push(scanner);
