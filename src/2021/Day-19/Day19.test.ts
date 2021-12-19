@@ -19,12 +19,12 @@ describe("Day 19", () => {
   const input = readFileIntoGroups(__dirname + "/input.txt");
 
   test("Part 01 - ...", () => {
-    // expect(solve(oneScanner)); //.toBe(-1);
+    expect(solve(oneScanner)); //.toBe(-1);
     expect(solve(example).beacons.length).toBe(exampleResolution.length);
-    // expect(solve(input).beacons.length).toBe(-1);
+    expect(solve(input).beacons.length).toBe(-1);
   });
 
-  test("Part 02 - ..", () => {
+  test.skip("Part 02 - ..", () => {
     // ...
   });
 });
@@ -34,8 +34,8 @@ describe("Day 19", () => {
 // However, scanners cannot detect other scanners. The submarine has automatically summarized the relative positions of beacons detected by each scanner (your puzzle input)
 
 type XYZ = [number, number, number];
-const { stringify, parse } = JSON;
-const { min, max, abs, floor, ceil, round } = Math;
+const { stringify } = JSON;
+const { abs } = Math;
 
 function solve(lines: string[]) {
   const scanners = lines.map(createScanner);
@@ -45,46 +45,67 @@ function solve(lines: string[]) {
   scanners[0]!.y = 0;
 
   const scannerZeroBeacons = scanners[0].beacons;
-  const zeroDiffs = getDiffs(scannerZeroBeacons);
+  const verifiedDiffs = [getDiffs(scannerZeroBeacons)];
 
   const otherScanners = scanners.slice(1);
   const mapBeacons = new Map<string, XYZ>();
 
-  otherScanners.forEach((scanner) => {
-    // ... that there are AT LEAST 12 BEACONS that both scanners detect within the overlap.
-    scanner.permutations.find((beaconPositionsInPermutation, i) => {
-      const matchedBeaconsInPerm = new Map<string, XYZ>();
-      const diffs = getDiffs(beaconPositionsInPermutation);
-
-      diffs.forEach((diff) => {
-        // TODO we can make look up faster by using a set
-        const matchedZeroDiff = zeroDiffs.find(
-          (d) => d.diffStr === diff.diffStr
-        );
-        if (matchedZeroDiff) {
-          matchedZeroDiff.points.forEach((p) => {
-            matchedBeaconsInPerm.set(stringify(p), p);
-          });
-        }
-      });
-
-      // This is the correct permutation stop checking
-      // Now this scanner's beacons can also be used as valid orientation
-      if (matchedBeaconsInPerm.size >= 12) {
-        matchedBeaconsInPerm.forEach((value, key) => {
-          mapBeacons.set(key, value);
-        });
-
-        // All other beacons in this permutation/rotation are can also be added
-        beaconPositionsInPermutation.forEach((xyz) => {
-          mapBeacons.set(stringify(xyz), xyz);
-        });
-
-        // Do not interate over other permutations in this scanner
-        return true;
-      }
-    });
+  scannerZeroBeacons.forEach((xyz) => {
+    mapBeacons.set(stringify(xyz), xyz);
   });
+
+  while (otherScanners.length) {
+    const scanner = otherScanners.shift()!;
+
+    // ... that there are AT LEAST 12 BEACONS that both scanners detect within the overlap.
+    const permutationForScanner = scanner.permutations.find(
+      (beaconPositionsInPermutation, i) => {
+        const matchedBeaconsInPerm = new Map<string, XYZ>();
+        const diffsInPermutation = getDiffs(beaconPositionsInPermutation);
+
+        diffsInPermutation.forEach((diff) => {
+          // TODO we can make look up faster by using a set
+          verifiedDiffs.find((verifiedDiff) =>
+            verifiedDiff.find((verifiedDiffInfo) => {
+              if (verifiedDiffInfo.diffStr === diff.diffStr) {
+                verifiedDiffInfo.points.forEach((p) => {
+                  matchedBeaconsInPerm.set(stringify(p), p);
+                });
+                return true;
+              }
+            })
+          );
+        });
+
+        // This is the correct permutation stop checking
+        // Now this scanner's beacons can also be used as valid orientation
+        if (matchedBeaconsInPerm.size >= 12) {
+          console.log("found something");
+          // x TODO no not add the matched ones again with different coords
+          // All other beacons in this permutation/rotation must be valid too and can also be added
+          beaconPositionsInPermutation.forEach((xyz) => {
+            const key = stringify(xyz);
+            if (matchedBeaconsInPerm.has(key)) {
+              console.log("this is the original matched point");
+              return;
+            }
+            mapBeacons.set(stringify(xyz), xyz);
+          });
+
+          verifiedDiffs.push(diffsInPermutation);
+          // Do not interate over other permutations in this scanner
+          return true;
+        }
+      }
+    );
+
+    // if not matched add back into cue
+    if (permutationForScanner) {
+      console.log("heureka!", permutationForScanner);
+    } else {
+      otherScanners.push(scanner);
+    }
+  }
 
   return { scanners, beacons: [...mapBeacons.values()] };
 
@@ -168,6 +189,8 @@ function solve(lines: string[]) {
 
         const points: [XYZ, XYZ] = [beacons[i], beacons[y]];
         const diff = calcDiff(...points);
+
+        // TODO: diff str might need to encode start and end, keys could be sorted end prefixed
         diffs.push({
           points,
           diff,
