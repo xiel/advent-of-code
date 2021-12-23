@@ -1,33 +1,50 @@
 import { readExampleIntoLines } from "../../utils/readFile";
 
 describe("Day 23: Amphipod", () => {
-  const example = readExampleIntoLines(`
+  test("Part 01 - ...", () => {
+    const example = readExampleIntoLines(`
     #############
     #...........#
     ###B#C#B#D###
     ###A#D#C#A###
     #############
   `);
-  const input = readExampleIntoLines(`
+    const input = readExampleIntoLines(`
     #############
     #...........#
     ###D#C#D#B###
     ###C#A#A#B###
     #############
   `);
+    expect(solve(example).bestCost).toBe(12521);
 
-  test("Part 01 - ...", () => {
-    // expect(solve(example).bestCost).toBe(12521);
-
-    const result = solve(input);
-    expect(result.bestCost).toBeGreaterThan(14361);
-    expect(result.bestCost).toBeLessThan(14532);
-    expect(result.bestCost).toBeLessThan(14442);
-    expect(result.bestCost).toBe(14415);
+    // const result = solve(input);
+    // expect(result.bestCost).toBe(14415);
   });
 
-  test.skip("Part 02 - ..", () => {
-    // ...
+  test("Part 02 - ..", () => {
+    const example = readExampleIntoLines(`
+      #############
+      #...........#
+      ###B#C#B#D###
+      ###D#C#B#A###
+      ###D#B#A#C###
+      ###A#D#C#A###
+      #############
+    `);
+    const input = readExampleIntoLines(`
+      #############
+      #...........#
+      ###D#C#D#B###
+      ###D#C#B#A###
+      ###D#B#A#C###
+      ###C#A#A#B###
+      #############
+    `);
+    // expect(solve(example, true).bestCost).toBe(44169);
+
+    const result = solve(input, true);
+    expect(result.bestCost).toBe(41121);
   });
 });
 
@@ -54,12 +71,15 @@ type Pod = {
   goalSideRoomX: number;
 };
 type PositionMap = Map<string, string>;
-const { min, max, abs, floor, ceil, round } = Math;
+const { min, max, abs } = Math;
 
-function solve(lines: string[]) {
+function solve(lines: string[], big = false) {
   let bestCost = Infinity;
 
   const initialState = createState();
+
+  const done = new Set<string>();
+  const [roomYFrom, roomYTo]: Pos = big ? [2, 5] : [2, 3];
 
   lines.forEach((l, y) =>
     l.split("").forEach((char, x) => {
@@ -91,19 +111,30 @@ function solve(lines: string[]) {
 
       const state = openStates.shift()!;
       const pods = state.pods;
+      // const key = state.key;
 
-      // console.log("----------", state.cost);
-      // state.print();
+      // if (done.has(key)) {
+      //   // console.log("handles before, doing nothing");
+      //   continue;
+      // }
 
-      if (state.cost >= bestCost) continue;
+      if (state.cost >= bestCost) {
+        // console.log("bad shit");
+        // done.add(state.key);
+        continue;
+      }
 
       const allPodsInGoalSideRoom = pods.every(isInGoalSideRoom);
 
       if (allPodsInGoalSideRoom) {
         bestCost = min(state.cost, bestCost);
-        console.log(`bestCost`, bestCost, state.cost, state.print());
+        console.log(`new bestCost`, bestCost, state.cost, state.print());
+        // done.add(state.key);
         continue;
       }
+
+      // state.print();
+      // done.add(state.key);
 
       pods.forEach((pod) => {
         if (isInHallway(pod.at)) {
@@ -149,20 +180,30 @@ function solve(lines: string[]) {
   type State = ReturnType<typeof createState>;
 
   function isBlockingOtherTypeInGoalSideRoom(map: PositionMap, pod: Pod) {
-    const [x, y] = pod.at;
-    const below = map.get(_(x, y + 1));
-    return (
-      isInGoalSideRoom(pod) && y === 2 && below !== "." && below !== pod.type
-    );
+    if (!isInGoalSideRoom(pod)) return false;
+    // eslint-disable-next-line prefer-const
+    let [x, y] = pod.at;
+    while (y < roomYTo) {
+      y++;
+      const below = map.get(_(x, y));
+      if (!below || below === "#") throw Error("unexpected below: " + below);
+      if (below !== "." && below !== pod.type) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function isTargetRoomClear(map: PositionMap, pod: Pod) {
-    return (
-      (isEmpty(map, pod.goalSideRoomX, 2) ||
-        isSameType(map, pod, pod.goalSideRoomX, 2)) &&
-      (isEmpty(map, pod.goalSideRoomX, 3) ||
-        isSameType(map, pod, pod.goalSideRoomX, 3))
-    );
+    const x = pod.goalSideRoomX;
+    let y = roomYFrom;
+    while (y <= roomYTo) {
+      if (!(isEmpty(map, x, y) || isSameType(map, pod, x, y))) {
+        return false;
+      }
+      y++;
+    }
+    return true;
   }
 
   function isSameType(map: PositionMap, pod: Pod, x: number, y: number) {
@@ -173,9 +214,13 @@ function solve(lines: string[]) {
     map: PositionMap,
     { goalSideRoomX }: Pod
   ): Pos | undefined {
-    // Always go as far into the goal side room as possible, if deep spot not empty take the upper spot
-    if (isEmpty(map, goalSideRoomX, 3)) return [goalSideRoomX, 3];
-    if (isEmpty(map, goalSideRoomX, 2)) return [goalSideRoomX, 2];
+    const x = goalSideRoomX;
+    let y = roomYTo;
+
+    while (y >= roomYFrom) {
+      if (isEmpty(map, x, y)) return [x, y];
+      y--;
+    }
   }
 
   function goTo(
@@ -203,7 +248,7 @@ function solve(lines: string[]) {
 
     const otherPods = pods.filter((p) => p !== pod);
 
-    if (otherPods.length !== 7)
+    if (otherPods.length !== (big ? 15 : 7))
       throw Error("unexpected pod count:" + otherPods.length);
 
     const newMap = new Map(map.entries());
@@ -250,7 +295,11 @@ function solve(lines: string[]) {
 
   function isInSideRoom(at: Pos) {
     const [x, y] = at;
-    return (y == 2 || y == 3) && [...goalSideRoomXPerType.values()].includes(x);
+    return (
+      y >= roomYFrom &&
+      y <= roomYTo &&
+      [...goalSideRoomXPerType.values()].includes(x)
+    );
   }
 
   function isInSideRoomButNotInGoal(pod: Pod) {
@@ -260,6 +309,19 @@ function solve(lines: string[]) {
   function isInGoalSideRoom(pod: Pod) {
     const [x] = pod.at;
     return isInSideRoom(pod.at) && x === pod.goalSideRoomX;
+  }
+
+  function getKey(map: PositionMap) {
+    return mapToLines(map).join("|");
+  }
+
+  function mapToLines(map: PositionMap) {
+    const arr = Array.from({ length: lines.length }, () => [] as string[]);
+    [...map.entries()].forEach(([key, value]) => {
+      const [x, y] = key.split(",").map((n) => +n);
+      arr[y][x] = value;
+    });
+    return arr.map((l) => l.join(""));
   }
 
   function createState({
@@ -273,34 +335,21 @@ function solve(lines: string[]) {
       map,
       pods,
       print() {
-        const arr = Array.from({ length: 5 }, () => [] as string[]);
-        [...map.entries()].forEach(([key, value]) => {
-          const [x, y] = key.split(",").map((n) => +n);
-          arr[y][x] = value;
-        });
-        const printable = arr.map((l) => l.join(""));
+        const printable = mapToLines(map);
         console.log(printable);
         return printable;
       },
       get starCost() {
-        // const cost = pods.reduce((a, b) => a + b.cost, 0);
-        const distanceToTargetCost = pods.reduce((a, pod) => {
+        return pods.reduce((a, pod) => {
           const [x] = pod.at;
           const distanceCost = abs(x - pod.goalSideRoomX);
-          // const distanceCostWeighed = distanceCost + (distanceCost * pod.costPerStep) / 1000;
           return a + distanceCost;
         }, 0);
-
-        return distanceToTargetCost;
       },
       get cost() {
         return pods.reduce((a, b) => a + b.cost, 0);
       },
     };
-  }
-
-  function deepCopy<T>(o: T): T {
-    return JSON.parse(JSON.stringify(o));
   }
 
   function _(...args: unknown[]) {
