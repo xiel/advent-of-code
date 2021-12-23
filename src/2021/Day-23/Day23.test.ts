@@ -1,7 +1,8 @@
 import { readExampleIntoLines } from "../../utils/readFile";
 
+// https://adventofcode.com/2021/day/23
 describe("Day 23: Amphipod", () => {
-  test("Part 01 - ...", () => {
+  test("Part 01 - Two levels deep", () => {
     const example = readExampleIntoLines(`
     #############
     #...........#
@@ -17,12 +18,10 @@ describe("Day 23: Amphipod", () => {
     #############
   `);
     expect(solve(example).bestCost).toBe(12521);
-
-    // const result = solve(input);
-    // expect(result.bestCost).toBe(14415);
+    expect(solve(input).bestCost).toBe(14415);
   });
 
-  test("Part 02 - ..", () => {
+  test("Part 02 - Four levels deep", () => {
     const example = readExampleIntoLines(`
       #############
       #...........#
@@ -41,10 +40,8 @@ describe("Day 23: Amphipod", () => {
       ###C#A#A#B###
       #############
     `);
-    // expect(solve(example, true).bestCost).toBe(44169);
-
-    const result = solve(input, true);
-    expect(result.bestCost).toBe(41121);
+    expect(solve(example, true).bestCost).toBe(44169);
+    expect(solve(input, true).bestCost).toBe(41121);
   });
 });
 
@@ -71,14 +68,13 @@ type Pod = {
   goalSideRoomX: number;
 };
 type PositionMap = Map<string, string>;
-const { min, max, abs } = Math;
+const { min, max } = Math;
 
 function solve(lines: string[], big = false) {
   let bestCost = Infinity;
 
   const initialState = createState();
-
-  const done = new Set<string>();
+  const bestScoreForState = new Map<string, number>();
   const [roomYFrom, roomYTo]: Pos = big ? [2, 5] : [2, 3];
 
   lines.forEach((l, y) =>
@@ -96,7 +92,7 @@ function solve(lines: string[], big = false) {
     })
   );
 
-  let openStates = [initialState];
+  const openStates = [initialState];
 
   play();
 
@@ -106,21 +102,21 @@ function solve(lines: string[], big = false) {
 
   function play() {
     while (openStates.length) {
-      openStates = openStates.map((s) => ({ ...s, starCost: s.starCost }));
-      openStates.sort((a, b) => a.starCost - b.starCost);
-
       const state = openStates.shift()!;
-      const pods = state.pods;
-      // const key = state.key;
-
-      // if (done.has(key)) {
-      //   // console.log("handles before, doing nothing");
-      //   continue;
-      // }
 
       if (state.cost >= bestCost) {
-        // console.log("bad shit");
-        // done.add(state.key);
+        continue;
+      }
+
+      const key = getKey(state.map);
+      const cost = state.cost;
+      const pods = state.pods;
+      const bestScoreToState = bestScoreForState.get(key);
+
+      // Check if this state (setting) was reached at a lesser cost before
+      if (bestScoreToState === undefined || cost < bestScoreToState) {
+        bestScoreForState.set(key, cost);
+      } else {
         continue;
       }
 
@@ -128,18 +124,13 @@ function solve(lines: string[], big = false) {
 
       if (allPodsInGoalSideRoom) {
         bestCost = min(state.cost, bestCost);
-        console.log(`new bestCost`, bestCost, state.cost, state.print());
-        // done.add(state.key);
         continue;
       }
-
-      // state.print();
-      // done.add(state.key);
 
       pods.forEach((pod) => {
         if (isInHallway(pod.at)) {
           if (isTargetRoomClear(state.map, pod)) {
-            // Pod must into goal side room from hallway
+            // Pod must go into goal side room from hallway
             // Pod should never enter when there is another kind of pod in room
             const targetPos = getSideRoomTarget(state.map, pod);
 
@@ -170,10 +161,6 @@ function solve(lines: string[], big = false) {
           });
         }
       });
-
-      if (!openStates.length && bestCost === Infinity) {
-        throw Error("mhh.");
-      }
     }
   }
 
@@ -312,7 +299,7 @@ function solve(lines: string[], big = false) {
   }
 
   function getKey(map: PositionMap) {
-    return mapToLines(map).join("|");
+    return mapToLines(map).slice(1, -1).join("|");
   }
 
   function mapToLines(map: PositionMap) {
@@ -334,18 +321,6 @@ function solve(lines: string[], big = false) {
     return {
       map,
       pods,
-      print() {
-        const printable = mapToLines(map);
-        console.log(printable);
-        return printable;
-      },
-      get starCost() {
-        return pods.reduce((a, pod) => {
-          const [x] = pod.at;
-          const distanceCost = abs(x - pod.goalSideRoomX);
-          return a + distanceCost;
-        }, 0);
-      },
       get cost() {
         return pods.reduce((a, b) => a + b.cost, 0);
       },
