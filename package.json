@@ -1,5 +1,5 @@
 {
-  "name": "@xiel/aoc-2020",
+  "name": "@xiel/advent-of-code",
   "private": true,
   "workspaces": [
     "src/*"
