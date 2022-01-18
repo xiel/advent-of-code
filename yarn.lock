@@ -2329,7 +2329,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 5.10.0
     "@typescript-eslint/parser": 5.10.0
     babel-jest: 27.4.6
-    canvas: 2.8.0
+    canvas: 2.9.0
     eslint: 8.7.0
     eslint-config-prettier: 8.3.0
     jest: 27.4.7
@@ -2841,15 +2841,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"canvas@npm:2.8.0":
-  version: 2.8.0
-  resolution: "canvas@npm:2.8.0"
+"canvas@npm:2.9.0":
+  version: 2.9.0
+  resolution: "canvas@npm:2.9.0"
   dependencies:
     "@mapbox/node-pre-gyp": ^1.0.0
-    nan: ^2.14.0
+    nan: ^2.15.0
     node-gyp: latest
     simple-get: ^3.0.3
-  checksum: 4cc909f63eaf88d22f9164601903745abcc6ccb7f70090b9389dc2cb68cbf139c220dbd75837e6d04602ff122b44a2eb17413bca850f9c6c602f74f1f0f1cc3f
+  checksum: 376ccd47340a46c04d5cabafd6feb1b7ae82c92dc3ae6db68c9cbac17ec1c43d2bf6aab60019690e9d49bf40b41bee3e4e0a8901f39b53e993789698e77e2699
   languageName: node
   linkType: hard
 
@@ -5085,7 +5085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.14.0":
+"nan@npm:^2.15.0":
   version: 2.15.0
   resolution: "nan@npm:2.15.0"
   dependencies:
