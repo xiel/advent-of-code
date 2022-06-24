@@ -31,6 +31,6 @@
   "packageManager": "yarn@3.2.1",
   "dependencies": {
     "@types/node": "17.0.0",
-    "canvas": "2.9.2"
+    "canvas": "2.9.3"
   }
 }
