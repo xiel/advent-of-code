@@ -8,6 +8,7 @@ C Z`;
 describe("Day 02", () => {
   test("Example", () => {
     expect(part1(readExampleIntoLines(exampleGuide))).toEqual(15);
+    expect(part2(readExampleIntoLines(exampleGuide))).toEqual(12);
   });
 
   test("Part 1", () => {
@@ -15,7 +16,7 @@ describe("Day 02", () => {
   });
 
   test("Part 2", () => {
-    //...
+    expect(part2(readFileIntoLines(__dirname + "/input.txt"))).toEqual(12526);
   });
 });
 
@@ -33,6 +34,7 @@ const meanings = {
 } as const;
 
 type Move = keyof typeof meanings;
+type Hand = keyof typeof beats;
 
 const scores = {
   Rock: 1,
@@ -44,6 +46,12 @@ const beats = {
   Rock: "Scissors",
   Paper: "Rock",
   Scissors: "Paper",
+} as const;
+
+const beatenBy = {
+  Scissors: "Rock",
+  Rock: "Paper",
+  Paper: "Scissors",
 } as const;
 
 function part1(guide: string[]) {
@@ -60,13 +68,53 @@ function part1(guide: string[]) {
 
     // plus the score for the outcome of the round (0 if you lost, 3 if the round was a draw, and 6 if you won).
     if (moveOpp === moveMe) {
-      // Draw
       roundScore += 3;
     } else if (beats[moveMe] === moveOpp) {
-      // I won
       roundScore += 6;
     } else {
-      // They won
+      roundScore += 0;
+    }
+
+    myTotalScore += roundScore;
+  }
+
+  return myTotalScore;
+}
+
+// "Anyway, the second column says how the round needs to end:
+// X means you need to lose, Y means you need to end the round in a draw, and Z means you need to win. Good luck!"
+const outcomeMap = {
+  X: "lose",
+  Y: "draw",
+  Z: "win",
+} as const;
+
+function part2(guide: string[]) {
+  let myTotalScore = 0;
+
+  for (const [opponent, , me] of guide) {
+    const [moveOpp, outcome] = [
+      meanings[opponent as Move],
+      outcomeMap[me as keyof typeof outcomeMap],
+    ] as const;
+
+    let moveMe: Hand = moveOpp;
+
+    if (outcome === "win") {
+      moveMe = beatenBy[moveOpp];
+    } else if (outcome === "lose") {
+      moveMe = beats[moveOpp];
+    }
+
+    // The score for a single round is the score for the shape you selected (1 for Rock, 2 for Paper, and 3 for Scissors)
+    let roundScore = scores[moveMe];
+
+    // plus the score for the outcome of the round (0 if you lost, 3 if the round was a draw, and 6 if you won).
+    if (moveOpp === moveMe) {
+      roundScore += 3;
+    } else if (beats[moveMe] === moveOpp) {
+      roundScore += 6;
+    } else {
       roundScore += 0;
     }
 
