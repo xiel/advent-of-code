@@ -13,3 +13,10 @@ export function desc(a: number, b: number) {
   if (a === b) return 0;
   return +1;
 }
+
+export function by<O, K extends keyof O>(
+  key: K,
+  compareFn: (a: O[K], b: O[K]) => number
+) {
+  return (a: O, b: O) => compareFn(a[key], b[key]);
+}
