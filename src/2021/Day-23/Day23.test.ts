@@ -2,7 +2,7 @@ import { readExampleIntoLines } from "../../utils/readFile";
 
 // https://adventofcode.com/2021/day/23
 describe("Day 23: Amphipod", () => {
-  test("Part 01 - Two levels deep", () => {
+  test.skip("Part 01 - Example", () => {
     const example = readExampleIntoLines(`
     #############
     #...........#
@@ -10,6 +10,10 @@ describe("Day 23: Amphipod", () => {
     ###A#D#C#A###
     #############
   `);
+    expect(solve(example).bestCost).toBe(12521);
+  });
+
+  test.skip("Part 01 - Two levels deep", () => {
     const input = readExampleIntoLines(`
     #############
     #...........#
@@ -17,11 +21,11 @@ describe("Day 23: Amphipod", () => {
     ###C#A#A#B###
     #############
   `);
-    expect(solve(example).bestCost).toBe(12521);
+
     expect(solve(input).bestCost).toBe(14415);
   });
 
-  test("Part 02 - Four levels deep", () => {
+  test.skip("Part 02 - Example", () => {
     const example = readExampleIntoLines(`
       #############
       #...........#
@@ -31,6 +35,12 @@ describe("Day 23: Amphipod", () => {
       ###A#D#C#A###
       #############
     `);
+
+    expect(solve(example, true).bestCost).toBe(44169);
+  });
+
+  // Not efficient - let's skip this 🌱
+  test.skip("Part 02 - Four levels deep", () => {
     const input = readExampleIntoLines(`
       #############
       #...........#
@@ -40,7 +50,6 @@ describe("Day 23: Amphipod", () => {
       ###C#A#A#B###
       #############
     `);
-    expect(solve(example, true).bestCost).toBe(44169);
     expect(solve(input, true).bestCost).toBe(41121);
   });
 });
