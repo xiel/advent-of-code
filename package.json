@@ -30,7 +30,7 @@
   },
   "packageManager": "yarn@3.8.4",
   "dependencies": {
-    "@types/node": "20.14.14",
+    "@types/node": "20.14.15",
     "canvas": "2.11.2"
   }
 }
