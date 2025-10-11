@@ -2906,12 +2906,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.16.2":
-  version: 20.16.2
-  resolution: "@types/node@npm:20.16.2"
+"@types/node@npm:20.19.21":
+  version: 20.19.21
+  resolution: "@types/node@npm:20.19.21"
   dependencies:
-    undici-types: ~6.19.2
-  checksum: 69d03cf607197b40775e10c57f26a30e2a7f4f108a29ef147db145227686021c26f696efbb5ff077831a7febe647c3374f725eed8e33442fc11230da9e895dda
+    undici-types: ~6.21.0
+  checksum: 79eeb55b109a54e212d963870d0a9184bbc1b6ed07a26a52d9aa87c15f594648d3832876b37635e5fb5c6206acd9240209394579d4e6ec0870d1b78cfa4c13d2
   languageName: node
   linkType: hard
 
@@ -3078,7 +3078,7 @@ __metadata:
     "@babel/preset-env": 7.28.3
     "@babel/preset-typescript": 7.27.1
     "@types/jest": 29.5.14
-    "@types/node": 20.16.2
+    "@types/node": 20.19.21
     "@typescript-eslint/eslint-plugin": 7.18.0
     "@typescript-eslint/parser": 7.18.0
     babel-jest: 29.7.0
@@ -7116,10 +7116,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~6.19.2":
-  version: 6.19.6
-  resolution: "undici-types@npm:6.19.6"
-  checksum: e66df2447b6d93a48b0605a54269d8c3f228edcd1e9563229f6de37e48ed53b3e49b4bc965733643ed9717e0e0fa1ee664c929db91d787c9f488fb3f9e17c533
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 46331c7d6016bf85b3e8f20c159d62f5ae471aba1eb3dc52fff35a0259d58dcc7d592d4cc4f00c5f9243fa738a11cfa48bd20203040d4a9e6bc25e807fab7ab3
   languageName: node
   linkType: hard
 
