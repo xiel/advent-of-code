@@ -3200,7 +3200,7 @@ __metadata:
     eslint: 8.57.1
     eslint-config-prettier: 10.1.8
     jest: 28.1.3
-    prettier: 3.7.2
+    prettier: 3.7.3
     ts-node: 10.9.2
     typescript: 4.7.4
   languageName: unknown
@@ -6375,12 +6375,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:3.7.2":
-  version: 3.7.2
-  resolution: "prettier@npm:3.7.2"
+"prettier@npm:3.7.3":
+  version: 3.7.3
+  resolution: "prettier@npm:3.7.3"
   bin:
     prettier: bin/prettier.cjs
-  checksum: c074283242714c401b7ba67a8c034c21610badaf8dde9346d74df021e37c975be582630c79dde660b9f959a00beb3cccd64277185a5a918cfa5fa36cff76bad7
+  checksum: fc3da17f1394f7e634eee762b1a42e0324cc6d78f8f966c746aed82c2712d24451db919e9dfa381b6fb4684b9cb04e25cfd08f47c55da92a814f9fa1e2427433
   languageName: node
   linkType: hard
 
