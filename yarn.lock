@@ -3196,7 +3196,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": 7.18.0
     "@typescript-eslint/parser": 7.18.0
     babel-jest: 29.7.0
-    canvas: 3.2.0
+    canvas: 3.2.1
     eslint: 8.57.1
     eslint-config-prettier: 10.1.8
     jest: 28.1.3
@@ -3730,14 +3730,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"canvas@npm:3.2.0":
-  version: 3.2.0
-  resolution: "canvas@npm:3.2.0"
+"canvas@npm:3.2.1":
+  version: 3.2.1
+  resolution: "canvas@npm:3.2.1"
   dependencies:
     node-addon-api: ^7.0.0
     node-gyp: latest
     prebuild-install: ^7.1.3
-  checksum: 68c7fe3c0c79efb3358d4ab4b04586068fefe06c7137e6636111ae91e68122ac069f05d883fdf11eb7fd08eba841096cb700324d02efca7abbf92d3476c567e4
+  checksum: b30931185723b58033ae48236dea6f48fa8961eac6893808a5fc615b18739caf8414ede5251d860ca78f13449ace5d03e7b8a2ed1ca5f31b489c964eb741972d
   languageName: node
   linkType: hard
 
