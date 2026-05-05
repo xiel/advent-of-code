@@ -1552,9 +1552,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-modules-systemjs@npm:^7.29.0":
-  version: 7.29.0
-  resolution: "@babel/plugin-transform-modules-systemjs@npm:7.29.0"
+"@babel/plugin-transform-modules-systemjs@npm:^7.29.4":
+  version: 7.29.4
+  resolution: "@babel/plugin-transform-modules-systemjs@npm:7.29.4"
   dependencies:
     "@babel/helper-module-transforms": ^7.28.6
     "@babel/helper-plugin-utils": ^7.28.6
@@ -1562,7 +1562,7 @@ __metadata:
     "@babel/traverse": ^7.29.0
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: 36fd7bcd694549effdbdf733c32f0c9dbadea052316ff5e0830b07482a60c8ff1ee79850efff05e8046c4b99c241832f2c5267e0ae7c721c531c8ef12930c4b9
+  checksum: d9cbb30669077756048af990a08ad1ba149785c336024affa49848dc4ffc5948bfaaf52d90bbec711a1f320e19e2c60182dbeff40d81cc5b9a09a87919abe07d
   languageName: node
   linkType: hard
 
@@ -1884,9 +1884,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/preset-env@npm:7.29.3":
-  version: 7.29.3
-  resolution: "@babel/preset-env@npm:7.29.3"
+"@babel/preset-env@npm:7.29.5":
+  version: 7.29.5
+  resolution: "@babel/preset-env@npm:7.29.5"
   dependencies:
     "@babel/compat-data": ^7.29.3
     "@babel/helper-compilation-targets": ^7.28.6
@@ -1927,7 +1927,7 @@ __metadata:
     "@babel/plugin-transform-member-expression-literals": ^7.27.1
     "@babel/plugin-transform-modules-amd": ^7.27.1
     "@babel/plugin-transform-modules-commonjs": ^7.28.6
-    "@babel/plugin-transform-modules-systemjs": ^7.29.0
+    "@babel/plugin-transform-modules-systemjs": ^7.29.4
     "@babel/plugin-transform-modules-umd": ^7.27.1
     "@babel/plugin-transform-named-capturing-groups-regex": ^7.29.0
     "@babel/plugin-transform-new-target": ^7.27.1
@@ -1961,7 +1961,7 @@ __metadata:
     semver: ^6.3.1
   peerDependencies:
     "@babel/core": ^7.0.0-0
-  checksum: bc07d151dbbcee339e9f7f68876b8d89798e01bc0a04d44c92460be61ac7bdc34810e81bc99055dc01305c86350fd8b54969fc907aa405702824b9b96917028d
+  checksum: 4241d9aa5488dc6df958fe866b747fcd2fd1c1385e95e05900bc6377b1c976cb5bc2057200e8a6c1f76dc99566983e27db927b768df09d7617f61d133f760b1a
   languageName: node
   linkType: hard
 
@@ -3218,7 +3218,7 @@ __metadata:
   resolution: "@xiel/advent-of-code@workspace:."
   dependencies:
     "@babel/core": 7.29.0
-    "@babel/preset-env": 7.29.3
+    "@babel/preset-env": 7.29.5
     "@babel/preset-typescript": 7.28.5
     "@types/jest": 29.5.14
     "@types/node": 20.16.2
